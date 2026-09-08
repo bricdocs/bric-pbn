@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>Briç PBN Dijitalleştirici v1.10</title>
+    <title>Briç PBN Dijitalleştirici v1.11</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -51,6 +51,32 @@
             padding: 16px;
             margin-bottom: 20px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .batch-panel {
+            background: #eff6ff;
+            border: 1px dashed #3b82f6;
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-batch {
+            background: #0284c7;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .batch-info {
+            font-size: 0.8rem;
+            color: #1e40af;
+            margin-top: 8px;
         }
 
         .field-group {
@@ -102,6 +128,7 @@
         .hand-card.has-image {
             border-style: solid;
             border-color: var(--primary);
+            background-color: #f0fdf4;
         }
 
         .hand-label {
@@ -221,7 +248,7 @@
 </head>
 <body>
 
-    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v2.0</span></h1>
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.11</span></h1>
 
     <!-- Ayarlar Paneli -->
     <div class="panel">
@@ -238,6 +265,17 @@
                     }
                 </script>
             </select>
+        </div>
+    </div>
+
+    <!-- HIZLI TOPLU YÜKLEME BUTONU -->
+    <div class="batch-panel">
+        <label for="file-batch" class="btn-batch">
+            ⚡ 4 El Fotoğrafını Tek Seferde Seç (N, E, S, W Sırasıyla)
+        </label>
+        <input type="file" id="file-batch" accept="image/*" multiple style="display:none;" onchange="handleBatchFileSelect(event)">
+        <div id="batchInfo" class="batch-info">
+            Seçtiğiniz 4 fotoğraf sırasıyla Kuzey (1), Doğu (2), Güney (3), Batı (4) olarak etiketlenir.
         </div>
     </div>
 
@@ -333,6 +371,28 @@
             document.getElementById(`card-${direction}`).classList.add('has-image');
         }
 
+        function handleBatchFileSelect(event) {
+            const files = Array.from(event.target.files);
+            if (files.length !== 4) {
+                alert(`Lütfen tam olarak 4 adet fotoğraf seçiniz! (Seçilen: ${files.length})`);
+                return;
+            }
+
+            const directions = ['N', 'E', 'S', 'W'];
+            directions.forEach((dir, index) => {
+                const file = files[index];
+                handFiles[dir] = file;
+
+                const objectUrl = URL.createObjectURL(file);
+                const img = document.getElementById(`preview-${dir}`);
+                img.src = objectUrl;
+                img.style.display = 'block';
+                document.getElementById(`card-${dir}`).classList.add('has-image');
+            });
+
+            document.getElementById('batchInfo').innerText = "✅ 4 el fotoğrafı sırasıyla (N, E, S, W) başarıyla yüklendi!";
+        }
+
         function compressAndConvertToBase64(file, maxWidth = 1600, maxHeight = 1600, quality = 0.82) {
             return new Promise((resolve, reject) => {
                 if (!file) {
@@ -385,7 +445,8 @@
 
         async function fetchGeminiWithRetry(apiKey, promptText, fileData, direction) {
             const statusBox = document.getElementById('status');
-            const models = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+            // Google AI Studio güncel modelleri
+            const models = ['gemini-3.6-flash', 'gemini-2.5-flash'];
             let lastError = null;
 
             for (let m = 0; m < models.length; m++) {
@@ -426,6 +487,11 @@
 
                         const errJson = await response.json().catch(() => ({}));
                         const errMsg = errJson.error?.message || response.statusText || `HTTP ${response.status}`;
+
+                        if (response.status === 404) {
+                            lastError = new Error(`Model (${modelName}) bulunamadı: ${errMsg}`);
+                            break; // 404 aldıysak aynı modeli tekrar tekrar deneme, diğer modele geç
+                        }
 
                         if (response.status === 429) {
                             const waitTime = attempt * 4;
