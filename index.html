@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Favicon 404 uyarısını engellemek için -->
     <link rel="icon" href="data:,">
-    <title>Briç PBN Tarayıcı v1.3</title>
+    <title>Briç PBN Tarayıcı v1.4</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -199,7 +198,7 @@
 </head>
 <body>
 
-    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.3</span></h1>
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.4</span></h1>
 
     <!-- Ayarlar Paneli -->
     <div class="panel">
@@ -346,8 +345,7 @@ Sadece ve sadece aşağıdaki tam JSON formatında yanıt ver, başka hiçbir me
 Eğer bir renkte kart yoksa o renk için boş metin "" yaz.
             `;
 
-            // Aktif Gemini Flash Endpoint
-            const modelName = 'gemini-2.0-flash';
+            const modelName = 'gemini-3.6-flash';
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
             const response = await fetch(url, {
