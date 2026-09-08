@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Briç PBN Tarayıcı v1.1</title>
+    <title>Briç PBN Tarayıcı v1.2</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -26,10 +26,19 @@
         }
 
         h1 {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             text-align: center;
             margin-bottom: 20px;
             color: #1e293b;
+        }
+
+        .version-tag {
+            font-size: 0.8rem;
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: #475569;
+            vertical-align: middle;
         }
 
         .panel {
@@ -77,7 +86,7 @@
             background: var(--card-bg);
             border: 2px dashed var(--border);
             border-radius: 12px;
-            padding: 12px;
+            padding: 10px;
             text-align: center;
             position: relative;
             display: flex;
@@ -95,21 +104,35 @@
         .hand-label {
             font-weight: 700;
             font-size: 1rem;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .hand-card input[type="file"] {
             display: none;
         }
 
+        .btn-group {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            width: 100%;
+        }
+
         .btn-upload {
+            flex: 1;
             background: #f1f5f9;
             border: 1px solid #cbd5e1;
-            padding: 8px 12px;
+            padding: 8px 4px;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
+            color: #334155;
+            white-space: nowrap;
+        }
+
+        .btn-upload:active {
+            background: #e2e8f0;
         }
 
         .preview-img {
@@ -174,7 +197,7 @@
 </head>
 <body>
 
-    <h1>Briç PBN Dijitalleştirici (Test V0.1)</h1>
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.2</span></h1>
 
     <!-- Ayarlar Paneli -->
     <div class="panel">
@@ -199,32 +222,48 @@
         <!-- Kuzey -->
         <div class="hand-card" id="card-N">
             <div class="hand-label">Kuzey (N)</div>
-            <label class="btn-upload" for="file-N">Fotoğraf Seç / Çek</label>
-            <input type="file" id="file-N" accept="image/*" onchange="handleFileSelect('N')">
+            <div class="btn-group">
+                <label class="btn-upload" for="file-N-cam">📷 Kamera</label>
+                <label class="btn-upload" for="file-N-gal">📁 Galeri</label>
+            </div>
+            <input type="file" id="file-N-cam" accept="image/*" capture="environment" onchange="handleFileSelect('N', 'cam')">
+            <input type="file" id="file-N-gal" accept="image/*" onchange="handleFileSelect('N', 'gal')">
             <img id="preview-N" class="preview-img" alt="Kuzey El">
         </div>
 
         <!-- Doğu -->
         <div class="hand-card" id="card-E">
             <div class="hand-label">Doğu (E)</div>
-            <label class="btn-upload" for="file-E">Fotoğraf Seç / Çek</label>
-            <input type="file" id="file-E" accept="image/*" onchange="handleFileSelect('E')">
+            <div class="btn-group">
+                <label class="btn-upload" for="file-E-cam">📷 Kamera</label>
+                <label class="btn-upload" for="file-E-gal">📁 Galeri</label>
+            </div>
+            <input type="file" id="file-E-cam" accept="image/*" capture="environment" onchange="handleFileSelect('E', 'cam')">
+            <input type="file" id="file-E-gal" accept="image/*" onchange="handleFileSelect('E', 'gal')">
             <img id="preview-E" class="preview-img" alt="Doğu El">
         </div>
 
         <!-- Güney -->
         <div class="hand-card" id="card-S">
             <div class="hand-label">Güney (S)</div>
-            <label class="btn-upload" for="file-S">Fotoğraf Seç / Çek</label>
-            <input type="file" id="file-S" accept="image/*" onchange="handleFileSelect('S')">
+            <div class="btn-group">
+                <label class="btn-upload" for="file-S-cam">📷 Kamera</label>
+                <label class="btn-upload" for="file-S-gal">📁 Galeri</label>
+            </div>
+            <input type="file" id="file-S-cam" accept="image/*" capture="environment" onchange="handleFileSelect('S', 'cam')">
+            <input type="file" id="file-S-gal" accept="image/*" onchange="handleFileSelect('S', 'gal')">
             <img id="preview-S" class="preview-img" alt="Güney El">
         </div>
 
         <!-- Batı -->
         <div class="hand-card" id="card-W">
             <div class="hand-label">Batı (W)</div>
-            <label class="btn-upload" for="file-W">Fotoğraf Seç / Çek</label>
-            <input type="file" id="file-W" accept="image/*" onchange="handleFileSelect('W')">
+            <div class="btn-group">
+                <label class="btn-upload" for="file-W-cam">📷 Kamera</label>
+                <label class="btn-upload" for="file-W-gal">📁 Galeri</label>
+            </div>
+            <input type="file" id="file-W-cam" accept="image/*" capture="environment" onchange="handleFileSelect('W', 'cam')">
+            <input type="file" id="file-W-gal" accept="image/*" onchange="handleFileSelect('W', 'gal')">
             <img id="preview-W" class="preview-img" alt="Batı El">
         </div>
     </div>
@@ -255,8 +294,8 @@
 
         const handFiles = { N: null, E: null, S: null, W: null };
 
-        function handleFileSelect(direction) {
-            const input = document.getElementById(`file-${direction}`);
+        function handleFileSelect(direction, source) {
+            const input = document.getElementById(`file-${direction}-${source}`);
             const file = input.files[0];
             if (!file) return;
 
