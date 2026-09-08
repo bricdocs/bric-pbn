@@ -904,16 +904,20 @@ Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
                 const pCtx = panelCanvas.getContext('2d');
 
 if (needsRotate) {
-    panelCanvas.width = h;
-    panelCanvas.height = w;
-    pCtx.translate(h, 0);
-    pCtx.rotate(Math.PI / 2);
-    pCtx.drawImage(img, 0, 0);
+    // Döndürme gerektiren durumlar için (eğer gerekirse)
+    panelCanvas.width = img.height;
+    panelCanvas.height = img.width;
+    pCtx.save();
+    pCtx.translate(panelCanvas.width / 2, panelCanvas.height / 2);
+    pCtx.rotate(Math.PI / 2); // veya duruma göre açı
+    pCtx.drawImage(img, -img.width / 2, -img.height / 2);
+    pCtx.restore();
 } else {
-                    panelCanvas.width = w;
-                    panelCanvas.height = h;
-                    pCtx.drawImage(img, 0, 0);
-                }
+    // Döndürme gerekmeyen, doğrudan yatay (landscape) gelen fotoğraflar için:
+    panelCanvas.width = img.width;
+    panelCanvas.height = img.height;
+    pCtx.drawImage(img, 0, 0);
+}
 
                 const finalCanvas = document.createElement('canvas');
                 const fCtx = finalCanvas.getContext('2d');
