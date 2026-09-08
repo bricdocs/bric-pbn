@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>Briç PBN Tarayıcı v1.5</title>
+    <title>Briç PBN Tarayıcı v1.6</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -13,6 +13,8 @@
             --text: #0f172a;
             --border: #e2e8f0;
             --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
         }
 
         body {
@@ -171,6 +173,26 @@
             min-height: 24px;
         }
 
+        .validation-report {
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .validation-report.success {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .validation-report.warning {
+            background-color: #fffbeb;
+            border: 1px solid #fef08a;
+            color: #92400e;
+        }
+
         textarea {
             width: 100%;
             height: 160px;
@@ -199,7 +221,7 @@
 </head>
 <body>
 
-    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.5</span></h1>
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.6</span></h1>
 
     <!-- Ayarlar Paneli -->
     <div class="panel">
@@ -276,6 +298,7 @@
 
     <!-- Sonuç Paneli -->
     <div class="panel" id="resultPanel" style="display: none;">
+        <div id="validationBox" class="validation-report"></div>
         <label>Üretilen PBN Metni:</label>
         <textarea id="pbnOutput" readonly></textarea>
         <button class="btn-copy" onclick="copyPbn()">PBN'i Kopyala</button>
@@ -339,7 +362,7 @@
                 for (let attempt = 1; attempt <= 3; attempt++) {
                     try {
                         const attemptInfo = attempt > 1 ? ` (Deneme ${attempt}/3)` : '';
-                        statusBox.innerText = `${direction} eli analiz ediliyor... [Model: ${modelName}${attemptInfo}]`;
+                        statusBox.innerText = `${direction} eli yüksek hassasiyetle taranıyor... [${modelName}${attemptInfo}]`;
 
                         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
@@ -359,7 +382,8 @@
                                     ]
                                 }],
                                 generationConfig: {
-                                    response_mime_type: "application/json"
+                                    response_mime_type: "application/json",
+                                    temperature: 0.1
                                 }
                             })
                         });
@@ -373,17 +397,17 @@
 
                         if (response.status === 503 || response.status === 429) {
                             lastError = new Error(`Sunucu meşgul (${response.status}). Bekleniyor...`);
-                            await new Promise(res => setTimeout(res, 2000 * attempt));
+                            await new Promise(res => setTimeout(res, 2500 * attempt));
                             continue;
                         } else if (response.status === 404) {
-                            break; // Modele erişilemedi, sonraki modele geç
+                            break;
                         } else {
                             throw new Error(errMsg);
                         }
                     } catch (err) {
                         lastError = err;
                         if (attempt === 3) break;
-                        await new Promise(res => setTimeout(res, 2000 * attempt));
+                        await new Promise(res => setTimeout(res, 2500 * attempt));
                     }
                 }
             }
@@ -394,26 +418,123 @@
             const fileData = await fileToBase64(handFiles[direction]);
 
             const promptText = `
-Bu fotoğrafta bir briç oyuncusunun eli vardır. Kartlar soldan sağa doğru Maça (♠), Kupa (♥), Karo (♦), Sinek (♣) renk sırasıyla ve her renk kendi içinde büyükten küçüğe (A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2) 'merdiven' dizilimiyle üst üste dizilmiştir.
+Sen hassas bir briç hakimi ve görsel analiz uzmanısın. HIZ SÜRESİ HİÇ ÖNEMLİ DEĞİLDİR, TEK KRİTER %100 HASSASİYET VE DOĞRULUKTUR.
 
-Lütfen fotoğraftaki kartları dikkatle okuyup tespit et.
-10 kartı için sadece 'T' harfini kullan.
-Sadece ve sadece aşağıdaki tam JSON formatında yanıt ver, başka hiçbir metin veya açıklama ekleme:
+GÖRSEL VE BRİÇ KURALLARI:
+1. Bu fotoğrafta bir briç oyuncusunun TAM OLARAK 13 ADET KARTTAN oluşan eli bulunmaktadır.
+2. Kartlar soldan sağa doğru 4 renge ayrılmıştır: Maça (S/♠), Kupa (H/♥), Karo (D/♦), Sinek (C/♣).
+3. Her renk kendi içinde büyükten küçüğe (A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2) "merdiven" (yarı örtüşen) dizilimiyle üst üste dizilmiştir.
+4. UYARI: 10 kartı için kesinlikle 'T' harfini kullan.
+
+GÖREVİN VE KONTROL ADIMLARI:
+- Görseldeki her bir kartı sol üst indeksinden dikkatle, acele etmeden soldan sağa doğru say.
+- Tespit ettiğin kartların toplamının 13 olduğundan kesinlikle emin ol.
+- Eğer bir renkte hiç kart yoksa o renk için boş metin "" yaz.
+- Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
+
 {
   "S": "AKT9",
   "H": "QJ8",
   "D": "765",
   "C": "432"
 }
-Eğer bir renkte kart yoksa o renk için boş metin "" yaz.
             `;
 
             const data = await fetchGeminiWithRetry(apiKey, promptText, fileData, direction);
             const textResponse = data.candidates[0].content.parts[0].text;
-            const parsed = JSON.parse(textResponse);
+            return JSON.parse(textResponse);
+        }
 
-            const formatSuit = (val) => (val && val.trim() !== "") ? val.trim() : "-";
-            return `${formatSuit(parsed.S)}.${formatSuit(parsed.H)}.${formatSuit(parsed.D)}.${formatSuit(parsed.C)}`;
+        function cleanSuit(val) {
+            if (!val || typeof val !== 'string') return "";
+            return val.toUpperCase().replace(/[^AKQJT98765432]/g, '');
+        }
+
+        function formatSuitForPbn(val) {
+            const cleaned = cleanSuit(val);
+            return cleaned.length > 0 ? cleaned : "-";
+        }
+
+        function validateDeck(rawResults) {
+            const suitNames = { S: 'Maça (♠)', H: 'Kupa (♥)', D: 'Karo (♦)', C: 'Sinek (♣)' };
+            const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+            const suits = ['S', 'H', 'D', 'C'];
+            const dirNames = { N: 'Kuzey', E: 'Doğu', S: 'Güney', W: 'Batı' };
+
+            const cardMap = {};
+            suits.forEach(s => {
+                ranks.forEach(r => {
+                    cardMap[`${s}_${r}`] = [];
+                });
+            });
+
+            const handCounts = { N: 0, E: 0, S: 0, W: 0 };
+            let totalCardsFound = 0;
+
+            for (let dir of ['N', 'E', 'S', 'W']) {
+                const handObj = rawResults[dir];
+                suits.forEach(s => {
+                    const suitCards = cleanSuit(handObj[s]);
+                    for (let char of suitCards) {
+                        handCounts[dir]++;
+                        totalCardsFound++;
+                        const key = `${s}_${char}`;
+                        if (cardMap[key]) {
+                            cardMap[key].push(dirNames[dir]);
+                        }
+                    }
+                });
+            }
+
+            const duplicates = [];
+            const missing = [];
+
+            for (let key in cardMap) {
+                const [s, r] = key.split('_');
+                const rankName = r === 'T' ? '10' : r;
+                const cardLabel = `${suitNames[s]} ${rankName}`;
+
+                if (cardMap[key].length > 1) {
+                    duplicates.push(`${cardLabel} (${cardMap[key].join(', ')} ellerinde)`);
+                } else if (cardMap[key].length === 0) {
+                    missing.push(cardLabel);
+                }
+            }
+
+            let isPerfect = (totalCardsFound === 52) && (duplicates.length === 0) && (missing.length === 0);
+            
+            let reportHtml = `<strong>Bord Doğrulama Analizi:</strong><br>`;
+            
+            if (isPerfect) {
+                reportHtml += `✅ <strong>Mükemmel!</strong> 52 kartın tamamı hatasız ve eksiksiz tespit edildi.`;
+                return { isPerfect: true, html: reportHtml };
+            }
+
+            let issues = [];
+
+            // El kart sayıları
+            let countIssues = [];
+            for (let dir of ['N', 'E', 'S', 'W']) {
+                if (handCounts[dir] !== 13) {
+                    countIssues.push(`${dirNames[dir]}: ${handCounts[dir]} kart`);
+                }
+            }
+            if (countIssues.length > 0) {
+                issues.push(`⚠️ <strong>Kart Sayısı Uyuşmazlığı:</strong> ${countIssues.join(', ')} (Her el 13 olmalı).`);
+            }
+
+            if (duplicates.length > 0) {
+                issues.push(`❌ <strong>Çift Okunan Kartlar:</strong> ${duplicates.join('; ')}.`);
+            }
+
+            if (missing.length > 0 && missing.length <= 8) {
+                issues.push(`🔍 <strong>Eksik Kartlar:</strong> ${missing.join(', ')}.`);
+            } else if (missing.length > 8) {
+                issues.push(`🔍 <strong>Eksik Kart Sayısı:</strong> ${missing.length} kart bulunamadı.`);
+            }
+
+            reportHtml += issues.join('<br>');
+            return { isPerfect: false, html: reportHtml };
         }
 
         async function processBoard() {
@@ -431,26 +552,35 @@ Eğer bir renkte kart yoksa o renk için boş metin "" yaz.
             const btn = document.getElementById('btnProcess');
             const status = document.getElementById('status');
             const resultPanel = document.getElementById('resultPanel');
+            const validationBox = document.getElementById('validationBox');
             
             btn.disabled = true;
             resultPanel.style.display = 'none';
 
             try {
                 const directions = ['N', 'E', 'S', 'W'];
-                const results = {};
+                const rawResults = {};
+                const formattedHands = {};
 
                 for (let dir of directions) {
-                    results[dir] = await analyzeHandImage(dir, apiKey);
+                    const parsed = await analyzeHandImage(dir, apiKey);
+                    rawResults[dir] = parsed;
+                    
+                    formattedHands[dir] = `${formatSuitForPbn(parsed.S)}.${formatSuitForPbn(parsed.H)}.${formatSuitForPbn(parsed.D)}.${formatSuitForPbn(parsed.C)}`;
                 }
 
-                status.innerText = "PBN Dosyası Oluşturuluyor...";
+                status.innerText = "52 Kart Doğrulaması Yapılıyor...";
+
+                const validation = validateDeck(rawResults);
+                validationBox.innerHTML = validation.html;
+                validationBox.className = `validation-report ${validation.isPerfect ? 'success' : 'warning'}`;
 
                 const boardNo = document.getElementById('boardNo').value;
-                const pbnText = buildPbnString(boardNo, results.N, results.E, results.S, results.W);
+                const pbnText = buildPbnString(boardNo, formattedHands.N, formattedHands.E, formattedHands.S, formattedHands.W);
 
                 document.getElementById('pbnOutput').value = pbnText;
                 resultPanel.style.display = 'block';
-                status.innerText = "İşlem Başarıyla Tamamlandı!";
+                status.innerText = "İşlem Tamamlandı!";
 
             } catch (err) {
                 console.error(err);
