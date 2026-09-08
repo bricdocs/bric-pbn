@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>Briç PBN Dijitalleştirici v1.9</title>
+    <title>Briç PBN Dijitalleştirici v1.10</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -76,13 +76,6 @@
 
         input:focus, select:focus {
             border-color: var(--primary);
-        }
-
-        .key-warning {
-            color: var(--danger);
-            font-size: 0.8rem;
-            display: none;
-            margin-top: 4px;
         }
 
         .hands-grid {
@@ -228,14 +221,13 @@
 </head>
 <body>
 
-    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.9</span></h1>
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v2.0</span></h1>
 
     <!-- Ayarlar Paneli -->
     <div class="panel">
         <div class="field-group">
-            <label for="apiKey">Gemini API Key (Google AI Studio)</label>
-            <input type="password" id="apiKey" placeholder="AIzaSy..." onchange="saveApiKey()" oninput="validateKeyFormat()">
-            <div id="keyWarn" class="key-warning">⚠️ Geçersiz Key Formatı! API anahtarları "AIzaSy" ile başlamalıdır.</div>
+            <label for="apiKey">Gemini API Key</label>
+            <input type="password" id="apiKey" placeholder="API Key giriniz..." onchange="saveApiKey()">
         </div>
         <div class="field-group">
             <label for="boardNo">Bord Numarası</label>
@@ -317,26 +309,12 @@
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) {
                 document.getElementById('apiKey').value = savedKey;
-                validateKeyFormat();
             }
         });
 
         function saveApiKey() {
             const key = document.getElementById('apiKey').value.trim();
             localStorage.setItem('gemini_api_key', key);
-            validateKeyFormat();
-        }
-
-        function validateKeyFormat() {
-            const key = document.getElementById('apiKey').value.trim();
-            const warnEl = document.getElementById('keyWarn');
-            if (key.length > 0 && !key.startsWith('AIzaSy')) {
-                warnEl.style.display = 'block';
-                return false;
-            } else {
-                warnEl.style.display = 'none';
-                return true;
-            }
         }
 
         const handFiles = { N: null, E: null, S: null, W: null };
@@ -449,10 +427,6 @@
                         const errJson = await response.json().catch(() => ({}));
                         const errMsg = errJson.error?.message || response.statusText || `HTTP ${response.status}`;
 
-                        if (response.status === 400 || response.status === 403) {
-                            throw new Error(`API Key Hatası (${response.status}): ${errMsg}`);
-                        }
-
                         if (response.status === 429) {
                             const waitTime = attempt * 4;
                             statusBox.innerText = `${direction} eli: Kota sınırı (429). ${waitTime} sn bekleniyor...`;
@@ -460,16 +434,10 @@
                             continue;
                         }
 
-                        if (response.status === 404) {
-                            lastError = new Error(`Model ${modelName} bulunamadı (${errMsg}). Lütfen API Key'inizi kontrol edin.`);
-                            break;
-                        }
-
-                        lastError = new Error(errMsg);
+                        lastError = new Error(`HTTP ${response.status}: ${errMsg}`);
 
                     } catch (err) {
                         lastError = err;
-                        if (err.message.includes("API Key Hatası")) throw err;
                         if (attempt === 3) break;
                     }
                 }
@@ -481,7 +449,7 @@
             const fileData = await compressAndConvertToBase64(handFiles[direction]);
 
             const promptText = `
-Sen hassas bir briç hakimi ve görsel analiz uzmanısın. HIZ SÜRESİ HİÇ ÖNEMLİ DEĞİLDİR, TEK KRİTER %100 HASSASİYET VE DOĞRULUKTUR.
+Sen hassas bir briç hakimi ve görsel analiz uzmanısın. TEK KRİTER %100 HASSASİYET VE DOĞRULUKTUR.
 
 GÖRSEL VE BRİÇ KURALLARI:
 1. Bu fotoğrafta bir briç oyuncusunun TAM OLARAK 13 ADET KARTTAN oluşan eli bulunmaktadır.
@@ -610,11 +578,6 @@ GÖREVİN VE KONTROL ADIMLARI:
             
             if (!apiKey) {
                 alert("Lütfen Gemini API Key giriniz!");
-                return;
-            }
-
-            if (!validateKeyFormat()) {
-                alert("Girdiğiniz API Key geçersiz formatta. Lütfen Google AI Studio'dan alınan (AIzaSy... ile başlayan) geçerli anahtarı girin!");
                 return;
             }
 
