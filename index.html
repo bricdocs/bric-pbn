@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>Briç PBN Dijitalleştirici v1.19</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        .version-tag {
+            font-size: 0.8rem;
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: #475569;
+            vertical-align: middle;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .upload-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .upload-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-box {
+            background: #eff6ff;
+            border: 1.5px dashed #3b82f6;
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .upload-box.sequential {
+            background: #f0fdf4;
+            border-color: #16a34a;
+        }
+
+        .btn-upload {
+            background: #0284c7;
+            color: white;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            display: inline-block;
+        }
+
+        .btn-upload.seq-btn {
+            background: #16a34a;
+        }
+
+        .upload-desc {
+            font-size: 0.78rem;
+            color: #475569;
+            margin-top: 8px;
+            line-height: 1.3;
+        }
+
+        .reset-link {
+            font-size: 0.75rem;
+            color: #dc2626;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        input[type="password"], input[type="text"], select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .hands-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .hand-card {
+            background: var(--card-bg);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 110px;
+            cursor: pointer;
+        }
+
+        .hand-card.has-image {
+            border-style: solid;
+            border-color: var(--success);
+            background-color: #f0fdf4;
+        }
+
+        .hand-label {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 85px;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .btn-main {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-main:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .status-box {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            text-align: center;
+            color: #64748b;
+            min-height: 24px;
+            white-space: pre-wrap;
+        }
+
+        .validation-report {
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .validation-report.success {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .validation-report.warning {
+            background-color: #fffbeb;
+            border: 1px solid #fef08a;
+            color: #92400e;
+        }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            resize: vertical;
+            margin-top: 10px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            color: white;
+            text-align: center;
+        }
+
+        .btn-copy { background: #475569; }
+        .btn-download-single { background: var(--success); }
+
+        /* PBN BİRLEŞTİRİCİ PANELİ */
+        .merger-panel {
+            background: #fdf4ff;
+            border: 1px dashed #c084fc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 30px;
+        }
+
+        .merger-title {
+            font-weight: 800;
+            font-size: 1rem;
+            color: #7e22ce;
+            margin-bottom: 8px;
+        }
+
+        .btn-merge-select {
+            background: #9333ea;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            display: inline-block;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .inspector-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 16px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 6px;
+        }
+
+        .inspector-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .inspector-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .inspector-hand {
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .inspector-hand-title {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .suit-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.6;
+            margin-bottom: 2px;
+        }
+
+        .suit-sym {
+            font-weight: 900;
+            font-size: 1.3rem;
+            width: 22px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .suit-black { color: #000000; }
+        .suit-red { color: #dc2626; }
+
+        .suit-cards {
+            letter-spacing: 2.5px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.19</span></h1>
+
+    <!-- Ayarlar Paneli -->
+    <div class="panel">
+        <div class="field-group">
+            <label for="apiKey">Gemini API Key</label>
+            <input type="password" id="apiKey" placeholder="API Key giriniz..." onchange="saveApiKey()">
+        </div>
+        <div class="field-group">
+            <label for="boardNo">Bord Numarası</label>
+            <select id="boardNo">
+                <script>
+                    for(let i=1; i<=32; i++) {
+                        document.write(`<option value="${i}">Bord ${i}</option>`);
+                    }
+                </script>
+            </select>
+        </div>
+    </div>
+
+    <!-- İKİLİ FOTOĞRAF YÜKLEME SEÇENEKLERİ -->
+    <div class="upload-options">
+        <div class="upload-box">
+            <label for="file-batch" class="btn-upload">
+                📂 Galeriden 4 Fotoğraf Seç
+            </label>
+            <input type="file" id="file-batch" accept="image/*" multiple style="display:none;" onchange="handleBatchFileSelect(event)">
+            <div class="upload-desc">N, E, S, W sırasıyla hafızadan 4 fotoğraf seçin.</div>
+        </div>
+
+        <div class="upload-box sequential">
+            <button id="btnSeqCamera" class="btn-upload seq-btn" onclick="triggerSeqCamera()">
+                📸 Sırayla Çek: Kuzey (1/4)
+            </button>
+            <input type="file" id="seqCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleSeqCameraSelect(event)">
+            <div id="seqDesc" class="upload-desc">Tek butonla N $\rightarrow$ E $\rightarrow$ S $\rightarrow$ W sırasıyla canlı çekim.</div>
+            <span id="resetSeqBtn" class="reset-link" onclick="resetSeqFlow()">Sıralı çekimi sıfırla</span>
+        </div>
+    </div>
+
+    <input type="file" id="singleFileInput" accept="image/*" style="display:none;" onchange="handleSingleFileSelect(event)">
+
+    <!-- 4 El Onay Paneli -->
+    <div class="hands-grid">
+        <div class="hand-card" id="card-N" onclick="triggerSingleUpload('N')">
+            <div class="hand-label">Kuzey (N)</div>
+            <img id="preview-N" class="preview-img" alt="Kuzey">
+        </div>
+        <div class="hand-card" id="card-E" onclick="triggerSingleUpload('E')">
+            <div class="hand-label">Doğu (E)</div>
+            <img id="preview-E" class="preview-img" alt="Doğu">
+        </div>
+        <div class="hand-card" id="card-S" onclick="triggerSingleUpload('S')">
+            <div class="hand-label">Güney (S)</div>
+            <img id="preview-S" class="preview-img" alt="Güney">
+        </div>
+        <div class="hand-card" id="card-W" onclick="triggerSingleUpload('W')">
+            <div class="hand-label">Batı (W)</div>
+            <img id="preview-W" class="preview-img" alt="Batı">
+        </div>
+    </div>
+
+    <canvas id="collageCanvas" style="display:none;"></canvas>
+
+    <button id="btnProcess" class="btn-main" onclick="processBoard()">Bordu Tek İstekte Çöz ve PBN Oluştur</button>
+    <div id="status" class="status-box"></div>
+
+    <!-- Sonuç Paneli -->
+    <div class="panel" id="resultPanel" style="display: none;">
+        <div id="validationBox" class="validation-report"></div>
+        
+        <label>Üretilen PBN Metni:</label>
+        <textarea id="pbnOutput" readonly></textarea>
+        
+        <div class="action-row">
+            <button class="btn-action btn-copy" onclick="copyPbn()">📋 PBN'i Kopyala</button>
+            <button class="btn-action btn-download-single" onclick="downloadSinglePbn()">💾 Bord PBN İndir</button>
+        </div>
+
+        <div class="inspector-title">🔍 Hızlı Kontrol - Briç Eli Görünümü</div>
+        <div class="inspector-grid" id="handsInspector"></div>
+    </div>
+
+    <!-- PBN BİRLEŞTİRİCİ (TURNUVA MODÜLÜ) -->
+    <div class="merger-panel">
+        <div class="merger-title">📚 Toplu PBN Birleştirici (Turnuva Modu)</div>
+        <div class="upload-desc" style="margin-bottom: 10px; text-align: left; color: #581c87;">
+            Daha önce kaydettiğin çok sayıda .pbn dosyasını (20-30 adet) toplu seçerek tek bir turnuva dosyasında birleştirebilirsin.
+        </div>
+        <label for="mergeFileInput" class="btn-merge-select">
+            📁 PBN Dosyalarını Seç ve Birleştir
+        </label>
+        <input type="file" id="mergeFileInput" accept=".pbn" multiple style="display:none;" onchange="handlePbnBatchMerge(event)">
+        <div id="mergeStatus" class="status-box" style="margin-top: 8px; color: #7e22ce;"></div>
+    </div>
+
+    <script>
+        const API_MODEL = "gemini-3.6-flash";
+        const handFiles = { N: null, E: null, S: null, W: null };
+        
+        const seqDirections = ['N', 'E', 'S', 'W'];
+        const seqLabels = { N: 'Kuzey (N)', E: 'Doğu (E)', S: 'Güney (S)', W: 'Batı (W)' };
+        let currentSeqIndex = 0;
+        let activeSingleDir = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+            }
+            updateSeqButtonState();
+        });
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            localStorage.setItem('gemini_api_key', key);
+        }
+
+        function handleBatchFileSelect(event) {
+            const files = Array.from(event.target.files);
+            if (files.length !== 4) {
+                alert(`Lütfen tam olarak 4 adet fotoğraf seçiniz! (Seçilen: ${files.length})`);
+                return;
+            }
+            seqDirections.forEach((dir, index) => {
+                setHandImage(dir, files[index]);
+            });
+            currentSeqIndex = 4;
+            updateSeqButtonState();
+        }
+
+        function triggerSeqCamera() {
+            if (currentSeqIndex >= 4) {
+                currentSeqIndex = 0;
+            }
+            document.getElementById('seqCameraInput').click();
+        }
+
+        function handleSeqCameraSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const targetDir = seqDirections[currentSeqIndex];
+            setHandImage(targetDir, file);
+
+            currentSeqIndex++;
+            updateSeqButtonState();
+            event.target.value = '';
+        }
+
+        function updateSeqButtonState() {
+            const btn = document.getElementById('btnSeqCamera');
+            const desc = document.getElementById('seqDesc');
+            const resetBtn = document.getElementById('resetSeqBtn');
+
+            if (currentSeqIndex < 4) {
+                const nextDir = seqDirections[currentSeqIndex];
+                btn.innerText = `📸 Sırayla Çek: ${seqLabels[nextDir]} (${currentSeqIndex + 1}/4)`;
+                btn.style.background = '#16a34a';
+                desc.innerText = `Sıradaki hedef: ${seqLabels[nextDir]}. Tıklayınca kamera açılır.`;
+                resetBtn.style.display = currentSeqIndex > 0 ? 'inline-block' : 'none';
+            } else {
+                btn.innerText = `✅ 4 El Çekildi (Yeniden Çek)`;
+                btn.style.background = '#0284c7';
+                desc.innerText = `4 el de hazır! Aşağıdaki "Bordu Çöz" butonuna basabilirsin.`;
+                resetBtn.style.display = 'inline-block';
+            }
+        }
+
+        function resetSeqFlow() {
+            currentSeqIndex = 0;
+            seqDirections.forEach(dir => {
+                handFiles[dir] = null;
+                const img = document.getElementById(`preview-${dir}`);
+                img.src = '';
+                img.style.display = 'none';
+                document.getElementById(`card-${dir}`).classList.remove('has-image');
+            });
+            updateSeqButtonState();
+        }
+
+        function triggerSingleUpload(dir) {
+            activeSingleDir = dir;
+            document.getElementById('singleFileInput').click();
+        }
+
+        function handleSingleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && activeSingleDir) {
+                setHandImage(activeSingleDir, file);
+            }
+            event.target.value = '';
+        }
+
+        function setHandImage(dir, file) {
+            handFiles[dir] = file;
+            const objectUrl = URL.createObjectURL(file);
+            const img = document.getElementById(`preview-${dir}`);
+            img.src = objectUrl;
+            img.style.display = 'block';
+            document.getElementById(`card-${dir}`).classList.add('has-image');
+        }
+
+        function create2x2Collage() {
+            return new Promise((resolve, reject) => {
+                const loadedImages = [];
+                let loadedCount = 0;
+
+                seqDirections.forEach((dir, index) => {
+                    const img = new Image();
+                    img.src = URL.createObjectURL(handFiles[dir]);
+                    img.onload = () => {
+                        loadedImages[index] = img;
+                        loadedCount++;
+                        if (loadedCount === 4) {
+                            renderCollage(loadedImages).then(resolve).catch(reject);
+                        }
+                    };
+                    img.onerror = () => reject(new Error(`${dir} el görseli yüklenemedi.`));
+                });
+            });
+        }
+
+        function renderCollage(images) {
+            return new Promise((resolve) => {
+                const canvas = document.getElementById('collageCanvas');
+                const tileW = 1500;
+                const tileH = 1500;
+                canvas.width = tileW * 2;
+                canvas.height = tileH * 2;
+
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                ctx.filter = 'contrast(125%) brightness(105%)';
+
+                ctx.drawImage(images[0], 0, 0, tileW, tileH);
+                ctx.drawImage(images[1], tileW, 0, tileW, tileH);
+                ctx.drawImage(images[2], 0, tileH, tileW, tileH);
+                ctx.drawImage(images[3], tileW, tileH, tileW, tileH);
+
+                ctx.filter = 'none';
+
+                ctx.font = 'bold 72px Arial';
+                ctx.shadowColor = 'black';
+                ctx.shadowBlur = 10;
+
+                const drawTag = (text, x, y) => {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(x, y - 65, 380, 85);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(text, x + 20, y);
+                };
+
+                drawTag('NORTH (N)', 30, 90);
+                drawTag('EAST (E)', tileW + 30, 90);
+                drawTag('SOUTH (S)', 30, tileH + 90);
+                drawTag('WEST (W)', tileW + 30, tileH + 90);
+
+                const base64Data = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+                resolve(base64Data);
+            });
+        }
+
+        async function fetchWithRetry(url, options, maxRetries = 2, delayMs = 3000) {
+            const statusBox = document.getElementById('status');
+            for (let i = 0; i <= maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 503 && i < maxRetries) {
+                        statusBox.innerText = `⚠️ Google sunucusu anlık yoğun (503).\n${delayMs / 1000} saniye içinde tekrar deneniyor (${i + 1}/${maxRetries})...`;
+                        await new Promise(res => setTimeout(res, delayMs));
+                        continue;
+                    }
+                    return response;
+                } catch (err) {
+                    if (i === maxRetries) throw err;
+                    await new Promise(res => setTimeout(res, delayMs));
+                }
+            }
+        }
+
+        async function processBoard() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert("Lütfen Gemini API Key giriniz!");
+                return;
+            }
+
+            if (!handFiles.N || !handFiles.E || !handFiles.S || !handFiles.W) {
+                alert("Lütfen 4 el fotoğrafını da tamamlayın!");
+                return;
+            }
+
+            const btn = document.getElementById('btnProcess');
+            const status = document.getElementById('status');
+            const resultPanel = document.getElementById('resultPanel');
+            const validationBox = document.getElementById('validationBox');
+
+            btn.disabled = true;
+            resultPanel.style.display = 'none';
+
+            try {
+                status.innerText = "1/2 📷 Kolaj Hazırlanıyor...";
+                const collageBase64 = await create2x2Collage();
+
+                status.innerText = "2/2 🚀 Yapay Zekaya Tek İstek Gönderiliyor...";
+
+                const promptText = `
+Sen hassas bir OCR ve Briç Kart Okuma Uzmanısın.
+ÖNCELİK: HIZ VEYA TAHMİN DEĞİL, %100 FİZİKSEL KARAKTER DOĞRULUĞUDUR.
+
+KADRANLAR VE ELLER:
+- Sol Üst Kadran: KUZEY (N)
+- Sağ Üst Kadran: DOĞU (E)
+- Sol Alt Kadran: GÜNEY (S)
+- Sağ Alt Kadran: BATI (W)
+
+KRİTİK ANTI-HALÜSİNASYON VE DETAY OKUMA KURALLARI:
+1. SIFIR TAHMİN MANDATU: Bir kart soluk, gölgeli veya parlamış olsa dahi ASLA "elde X tane olmalı" mantığıyla kart uydurma veya eksik tamamlamaya çalışma. Yalnızca kartın üzerindeki basılı karakterin fiziki çizgisini oku.
+2. 'Q' VE '9' AYRIMI (ÇOK ÖNEMLİ):
+   - 'Q' (Kız): Yuvarlak harfin sağ alt köşesinde çapraz bir kuyruk çizgisi bulunur.
+   - '9' (Dokuz): Altı kıvrımlı rakamdır.
+   Soluk kartlarda bu iki karakteri birbiriyle karıştırma, çizgi detayını dikkatle incele.
+3. SEMBOL VE RENK ÇAPASI: Her renk grubunu Maça (♠), Kupa (♥), Karo (♦), Sinek (♣) sembollerinin hizasına göre oku.
+   - Maça ve Sinek SİYAH kartlardır.
+   - Kupa ve Karo KIRMIZI kartlardır.
+   Siyah sembol altına kırmızı kart, kırmızı sembol altına siyah kart yazma.
+4. ŞİKAN (VOID) KURALI: Bir renkte kart yoksa o alan için kesinlikle boş metin "" bırak.
+5. '10' kartı için KESİNLİKLE 'T' harfini kullan.
+
+Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
+{
+  "N": { "S": "AKT9", "H": "QJ8", "D": "765", "C": "432" },
+  "E": { "S": "...", "H": "...", "D": "...", "C": "..." },
+  "S": { "S": "...", "H": "...", "D": "...", "C": "..." },
+  "W": { "S": "...", "H": "...", "D": "...", "C": "..." }
+}
+                `;
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
+
+                const response = await fetchWithRetry(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: promptText },
+                                {
+                                    inline_data: {
+                                        mime_type: "image/jpeg",
+                                        data: collageBase64
+                                    }
+                                }
+                            ]
+                        }],
+                        generationConfig: {
+                            response_mime_type: "application/json",
+                            temperature: 0.0
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!rawJsonText) {
+                    throw new Error("Yapay zekadan geçerli bir yanıt alınamadı.");
+                }
+
+                const parsedResults = JSON.parse(rawJsonText);
+
+                status.innerText = "52 Kart Doğrulaması Yapılıyor...";
+                const validation = validateDeck(parsedResults);
+                validationBox.innerHTML = validation.html;
+                validationBox.className = `validation-report ${validation.isPerfect ? 'success' : 'warning'}`;
+
+                const boardNo = document.getElementById('boardNo').value;
+                const formattedHands = {};
+                for (let dir of ['N', 'E', 'S', 'W']) {
+                    const h = parsedResults[dir] || {};
+                    formattedHands[dir] = `${formatSuitForPbn(h.S)}.${formatSuitForPbn(h.H)}.${formatSuitForPbn(h.D)}.${formatSuitForPbn(h.C)}`;
+                }
+
+                const pbnText = buildPbnString(boardNo, formattedHands.N, formattedHands.E, formattedHands.S, formattedHands.W);
+                document.getElementById('pbnOutput').value = pbnText;
+                
+                renderHumanReadableHands(parsedResults);
+
+                resultPanel.style.display = 'block';
+                status.innerText = "✅ İşlem Başarıyla Tamamlandı!";
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = "❌ Hata Oluştu:\n" + (err.message || err.toString());
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function renderHumanReadableHands(parsedResults) {
+            const container = document.getElementById('handsInspector');
+            let html = '';
+
+            for (let dir of ['N', 'E', 'S', 'W']) {
+                const hand = parsedResults[dir] || {};
+                
+                const formatCards = (str) => {
+                    const cleaned = cleanSuit(str);
+                    if (!cleaned) return '<span style="color:#94a3b8; font-size: 0.95rem;">— (Şikan)</span>';
+                    return cleaned.split('').join(' ');
+                };
+
+                html += `
+                    <div class="inspector-hand">
+                        <div class="inspector-hand-title">${seqLabels[dir]}</div>
+                        <div class="suit-line">
+                            <span class="suit-sym suit-black">♠</span>
+                            <span class="suit-cards">${formatCards(hand.S)}</span>
+                        </div>
+                        <div class="suit-line">
+                            <span class="suit-sym suit-red">♥</span>
+                            <span class="suit-cards">${formatCards(hand.H)}</span>
+                        </div>
+                        <div class="suit-line">
+                            <span class="suit-sym suit-red">♦</span>
+                            <span class="suit-cards">${formatCards(hand.D)}</span>
+                        </div>
+                        <div class="suit-line">
+                            <span class="suit-sym suit-black">♣</span>
+                            <span class="suit-cards">${formatCards(hand.C)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function cleanSuit(val) {
+            if (!val || typeof val !== 'string') return "";
+            return val.toUpperCase().replace(/[^AKQJT98765432]/g, '');
+        }
+
+        function formatSuitForPbn(val) {
+            const cleaned = cleanSuit(val);
+            return cleaned.length > 0 ? cleaned : "-";
+        }
+
+        function validateDeck(rawResults) {
+            const suitNames = { S: 'Maça (♠)', H: 'Kupa (♥)', D: 'Karo (♦)', C: 'Sinek (♣)' };
+            const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+            const suits = ['S', 'H', 'D', 'C'];
+
+            const cardMap = {};
+            suits.forEach(s => {
+                ranks.forEach(r => { cardMap[`${s}_${r}`] = []; });
+            });
+
+            const handCounts = { N: 0, E: 0, S: 0, W: 0 };
+            let totalCardsFound = 0;
+
+            for (let dir of ['N', 'E', 'S', 'W']) {
+                const handObj = rawResults[dir] || {};
+                suits.forEach(s => {
+                    const suitCards = cleanSuit(handObj[s]);
+                    for (let char of suitCards) {
+                        handCounts[dir]++;
+                        totalCardsFound++;
+                        const key = `${s}_${char}`;
+                        if (cardMap[key]) cardMap[key].push(seqLabels[dir]);
+                    }
+                });
+            }
+
+            const duplicates = [];
+            const missing = [];
+
+            for (let key in cardMap) {
+                const [s, r] = key.split('_');
+                const rankName = r === 'T' ? 'T (10)' : r;
+                const cardLabel = `${suitNames[s]} ${rankName}`;
+
+                if (cardMap[key].length > 1) {
+                    duplicates.push(`${cardLabel} (${cardMap[key].join(', ')} ellerinde)`);
+                } else if (cardMap[key].length === 0) {
+                    missing.push(cardLabel);
+                }
+            }
+
+            let isPerfect = (totalCardsFound === 52) && (duplicates.length === 0) && (missing.length === 0);
+            let reportHtml = `<strong>Bord Doğrulama Analizi:</strong><br>`;
+
+            if (isPerfect) {
+                reportHtml += `✅ <strong>Mükemmel!</strong> 52 kartın tamamı hatasız ve eksiksiz tespit edildi.`;
+                return { isPerfect: true, html: reportHtml };
+            }
+
+            let issues = [];
+            let countIssues = [];
+            for (let dir of ['N', 'E', 'S', 'W']) {
+                if (handCounts[dir] !== 13) {
+                    countIssues.push(`${seqLabels[dir]}: ${handCounts[dir]} kart`);
+                }
+            }
+            if (countIssues.length > 0) {
+                issues.push(`⚠️ <strong>Kart Sayısı Uyuşmazlığı:</strong> ${countIssues.join(', ')} (Her el 13 olmalı).`);
+            }
+            if (duplicates.length > 0) {
+                issues.push(`❌ <strong>Çift Okunan Kartlar:</strong> ${duplicates.join('; ')}.`);
+            }
+            if (missing.length > 0 && missing.length <= 8) {
+                issues.push(`🔍 <strong>Eksik Kartlar:</strong> ${missing.join(', ')}.`);
+            } else if (missing.length > 8) {
+                issues.push(`🔍 <strong>Eksik Kart Sayısı:</strong> ${missing.length} kart bulunamadı.`);
+            }
+
+            reportHtml += issues.join('<br>');
+            return { isPerfect: false, html: reportHtml };
+        }
+
+        function buildPbnString(boardNo, n, e, s, w) {
+            const dealers = ['N', 'E', 'S', 'W'];
+            const dealer = dealers[(parseInt(boardNo) - 1) % 4];
+            const vulPattern = ['None', 'NS', 'EW', 'All', 'NS', 'EW', 'All', 'None', 'EW', 'All', 'None', 'NS', 'All', 'None', 'NS', 'EW'];
+            const vul = vulPattern[(parseInt(boardNo) - 1) % 16];
+            const today = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+
+            return `[Event "Bridge Hand Digitizer"]
+[Site "Mobile Web App"]
+[Date "${today}"]
+[Board "${boardNo}"]
+[West "-"]
+[North "-"]
+[East "-"]
+[South "-"]
+[Dealer "${dealer}"]
+[Vulnerable "${vul}"]
+[Deal "N:${n} ${e} ${s} ${w}"]`;
+        }
+
+        function copyPbn() {
+            const textarea = document.getElementById('pbnOutput');
+            textarea.select();
+            document.execCommand('copy');
+            alert("PBN metni panoya kopyalandı!");
+        }
+
+        // --- TEKİL PBN İNDİRME ---
+        function downloadSinglePbn() {
+            const pbnText = document.getElementById('pbnOutput').value;
+            const boardNo = document.getElementById('boardNo').value;
+            if (!pbnText) return;
+
+            const blob = new Blob([pbnText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BORD_${boardNo}.pbn`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- TOPLU PBN BİRLEŞTİRME VE İNDİRME ---
+        async function handlePbnBatchMerge(event) {
+            const files = Array.from(event.target.files);
+            const statusDiv = document.getElementById('mergeStatus');
+            if (files.length === 0) return;
+
+            statusDiv.innerText = `${files.length} dosya okunuyor ve birleştiriliyor...`;
+
+            let fileContents = [];
+
+            for (let file of files) {
+                try {
+                    const text = await file.text();
+                    fileContents.push({ name: file.name, content: text.trim() });
+                } catch (err) {
+                    console.error(`${file.name} okunamadı:`, err);
+                }
+            }
+
+            // Bord numarasına göre dosyaları akıllı sıralama denemesi (örn: BORD_1.pbn, BORD_2.pbn)
+            fileContents.sort((a, b) => {
+                const getNum = (str) => {
+                    const match = str.match(/\d+/);
+                    return match ? parseInt(match[0], 10) : 0;
+                };
+                return getNum(a.name) - getNum(b.name);
+            });
+
+            // PBN standartlarında aralarında boşluk bırakarak birleştir
+            const combinedText = fileContents.map(f => f.content).join('\n\n');
+
+            // Bugünün tarihiyle dosya adı oluştur
+            const todayStr = new Date().toISOString().split('T')[0];
+            const mergedFileName = `${todayStr}_Turnuva_Birlesik.pbn`;
+
+            const blob = new Blob([combinedText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = mergedFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            statusDiv.innerText = `✅ Başarıyla ${fileContents.length} bord birleştirildi ve "${mergedFileName}" olarak indirildi!`;
+            event.target.value = ''; // Sıfırla
+        }
+    </script>
+</body>
+</html>
