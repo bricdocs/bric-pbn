@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>Briç PBN Dijitalleştirici v1.15</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        .version-tag {
+            font-size: 0.8rem;
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: #475569;
+            vertical-align: middle;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .batch-panel {
+            background: #eff6ff;
+            border: 1px dashed #3b82f6;
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-batch {
+            background: #0284c7;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .batch-info {
+            font-size: 0.8rem;
+            color: #1e40af;
+            margin-top: 8px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        input[type="password"], input[type="text"], select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .hands-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .hand-card {
+            background: var(--card-bg);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+        }
+
+        .hand-card.has-image {
+            border-style: solid;
+            border-color: var(--primary);
+            background-color: #f0fdf4;
+        }
+
+        .hand-label {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 90px;
+            border-radius: 6px;
+            object-fit: cover;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .btn-main {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-main:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .status-box {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            text-align: center;
+            color: #64748b;
+            min-height: 24px;
+            white-space: pre-wrap;
+        }
+
+        .validation-report {
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .validation-report.success {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .validation-report.warning {
+            background-color: #fffbeb;
+            border: 1px solid #fef08a;
+            color: #92400e;
+        }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            resize: vertical;
+            margin-top: 10px;
+        }
+
+        .btn-copy {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            margin-bottom: 16px;
+        }
+
+        /* --- BRİÇ ELİ DENETLEYİCİSİ YENİ BOLD VE BÜYÜK STİLLERİ --- */
+        .inspector-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 16px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 6px;
+        }
+
+        .inspector-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .inspector-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .inspector-hand {
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .inspector-hand-title {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .suit-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.6;
+            margin-bottom: 2px;
+        }
+
+        .suit-sym {
+            font-weight: 900;
+            font-size: 1.3rem;
+            width: 22px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .suit-black { color: #000000; }
+        .suit-red { color: #dc2626; }
+
+        .suit-cards {
+            letter-spacing: 2.5px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.15</span></h1>
+
+    <!-- Ayarlar Paneli -->
+    <div class="panel">
+        <div class="field-group">
+            <label for="apiKey">Gemini API Key</label>
+            <input type="password" id="apiKey" placeholder="API Key giriniz..." onchange="saveApiKey()">
+        </div>
+        <div class="field-group">
+            <label for="boardNo">Bord Numarası</label>
+            <select id="boardNo">
+                <script>
+                    for(let i=1; i<=32; i++) {
+                        document.write(`<option value="${i}">Bord ${i}</option>`);
+                    }
+                </script>
+            </select>
+        </div>
+    </div>
+
+    <!-- HIZLI TOPLU YÜKLEME BUTONU -->
+    <div class="batch-panel">
+        <label for="file-batch" class="btn-batch">
+            ⚡ 4 El Fotoğrafını Seç (N, E, S, W Sırasıyla)
+        </label>
+        <input type="file" id="file-batch" accept="image/*" multiple style="display:none;" onchange="handleBatchFileSelect(event)">
+        <div id="batchInfo" class="batch-info">
+            Seçtiğiniz 4 fotoğraf sırasıyla Kuzey, Doğu, Güney, Batı olarak birleştirilir.
+        </div>
+    </div>
+
+    <!-- 4 El Onay Paneli -->
+    <div class="hands-grid">
+        <div class="hand-card" id="card-N">
+            <div class="hand-label">Kuzey (N)</div>
+            <img id="preview-N" class="preview-img" alt="Kuzey">
+        </div>
+        <div class="hand-card" id="card-E">
+            <div class="hand-label">Doğu (E)</div>
+            <img id="preview-E" class="preview-img" alt="Doğu">
+        </div>
+        <div class="hand-card" id="card-S">
+            <div class="hand-label">Güney (S)</div>
+            <img id="preview-S" class="preview-img" alt="Güney">
+        </div>
+        <div class="hand-card" id="card-W">
+            <div class="hand-label">Batı (W)</div>
+            <img id="preview-W" class="preview-img" alt="Batı">
+        </div>
+    </div>
+
+    <!-- Gizli Canvas -->
+    <canvas id="collageCanvas" style="display:none;"></canvas>
+
+    <!-- İşlem Butonu -->
+    <button id="btnProcess" class="btn-main" onclick="processBoard()">Bordu Tek İstekte Çöz ve PBN Oluştur</button>
+    <div id="status" class="status-box"></div>
+
+    <!-- Sonuç Paneli -->
+    <div class="panel" id="resultPanel" style="display: none;">
+        <div id="validationBox" class="validation-report"></div>
+        
+        <label>Üretilen PBN Metni:</label>
+        <textarea id="pbnOutput" readonly></textarea>
+        <button class="btn-copy" onclick="copyPbn()">PBN'i Kopyala</button>
+
+        <!-- KUTUNUN DIŞINDA HIZLI KONTROL İÇİN BRİÇ ELİ DENETLEYİCİSİ -->
+        <div class="inspector-title">🔍 Hızlı Kontrol - Briç Eli Görünümü</div>
+        <div class="inspector-grid" id="handsInspector">
+            <!-- JavaScript burayı dolduracak -->
+        </div>
+    </div>
+
+    <script>
+        const API_MODEL = "gemini-3.6-flash";
+        const handFiles = { N: null, E: null, S: null, W: null };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+            }
+        });
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            localStorage.setItem('gemini_api_key', key);
+        }
+
+        function handleBatchFileSelect(event) {
+            const files = Array.from(event.target.files);
+            if (files.length !== 4) {
+                alert(`Lütfen tam olarak 4 adet fotoğraf seçiniz! (Seçilen: ${files.length})`);
+                return;
+            }
+
+            const directions = ['N', 'E', 'S', 'W'];
+            directions.forEach((dir, index) => {
+                const file = files[index];
+                handFiles[dir] = file;
+
+                const objectUrl = URL.createObjectURL(file);
+                const img = document.getElementById(`preview-${dir}`);
+                img.src = objectUrl;
+                img.style.display = 'block';
+                document.getElementById(`card-${dir}`).classList.add('has-image');
+            });
+
+            document.getElementById('batchInfo').innerText = "✅ 4 el fotoğrafı (N, E, S, W) hazır!";
+        }
+
+        function create2x2Collage() {
+            return new Promise((resolve, reject) => {
+                const dirs = ['N', 'E', 'S', 'W'];
+                const loadedImages = [];
+                let loadedCount = 0;
+
+                dirs.forEach((dir, index) => {
+                    const img = new Image();
+                    img.src = URL.createObjectURL(handFiles[dir]);
+                    img.onload = () => {
+                        loadedImages[index] = img;
+                        loadedCount++;
+                        if (loadedCount === 4) {
+                            renderCollage(loadedImages).then(resolve).catch(reject);
+                        }
+                    };
+                    img.onerror = () => reject(new Error(`${dir} el görseli yüklenemedi.`));
+                });
+            });
+        }
+
+        function renderCollage(images) {
+            return new Promise((resolve) => {
+                const canvas = document.getElementById('collageCanvas');
+                const tileW = 1500;
+                const tileH = 1500;
+                canvas.width = tileW * 2;
+                canvas.height = tileH * 2;
+
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                ctx.drawImage(images[0], 0, 0, tileW, tileH);
+                ctx.drawImage(images[1], tileW, 0, tileW, tileH);
+                ctx.drawImage(images[2], 0, tileH, tileW, tileH);
+                ctx.drawImage(images[3], tileW, tileH, tileW, tileH);
+
+                ctx.font = 'bold 72px Arial';
+                ctx.shadowColor = 'black';
+                ctx.shadowBlur = 10;
+
+                const drawTag = (text, x, y) => {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(x, y - 65, 380, 85);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(text, x + 20, y);
+                };
+
+                drawTag('NORTH (N)', 30, 90);
+                drawTag('EAST (E)', tileW + 30, 90);
+                drawTag('SOUTH (S)', 30, tileH + 90);
+                drawTag('WEST (W)', tileW + 30, tileH + 90);
+
+                const base64Data = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+                resolve(base64Data);
+            });
+        }
+
+        async function processBoard() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert("Lütfen Gemini API Key giriniz!");
+                return;
+            }
+
+            if (!handFiles.N || !handFiles.E || !handFiles.S || !handFiles.W) {
+                alert("Lütfen 4 el fotoğrafını da yükleyin!");
+                return;
+            }
+
+            const btn = document.getElementById('btnProcess');
+            const status = document.getElementById('status');
+            const resultPanel = document.getElementById('resultPanel');
+            const validationBox = document.getElementById('validationBox');
+
+            btn.disabled = true;
+            resultPanel.style.display = 'none';
+
+            try {
+                status.innerText = "1/2 📷 Yüksek Çözünürlüklü Kolaj Hazırlanıyor...";
+                const collageBase64 = await create2x2Collage();
+
+                status.innerText = "2/2 🚀 Yapay Zekaya Tek İstek Gönderiliyor...";
+
+                // GELİŞTİRİLMİŞ SEMBOL VE RENK KİLİTLİ PROMPT
+                const promptText = `
+Sen hassas bir briç hakimi ve görsel analiz uzmanısın.
+Bu görselde 4 farklı briç oyuncusunun eli 2x2 kolaj halinde birleştirilmiştir.
+
+KADRANLAR VE ELLER:
+- Sol Üst Kadran: KUZEY (N)
+- Sağ Üst Kadran: DOĞU (E)
+- Sol Alt Kadran: GÜNEY (S)
+- Sağ Alt Kadran: BATI (W)
+
+KRİTİK GÖRSEL ANALİZ KURALLARI:
+1. SEMBOL ÇAPASI (ÇOK ÖNEMLİ): Grupları sıraya göre okuma. Her renk grubunun başında veya üzerinde yer alan Maça (♠), Kupa (♥), Karo (♦), Sinek (♣) sembollerini ara. Kartları sadece ait olduğu sembolün altına yaz.
+2. RENK KİLİDİ:
+   - Maça (S) ve Sinek (C) SİYAH kartlardır.
+   - Kupa (H) ve Karo (D) KIRMIZI kartlardır.
+   Siyah renk sembolünün altına kırmızı kart, kırmızı renk sembolünün altına siyah kart ASLA yazılamaz.
+3. ŞİKAN (VOID) KURALI: Oyuncunun elinde bir renk hiç yoksa (Şikan ise), o rengin karşısını kesinlikle boş metin "" olarak bırak. Asla başka rengin kartını oraya doldurma.
+4. SIRA TOLERANSI: Oyuncu kartları masaya büyükten küçüğe dizmemiş olabilir (örneğin A J 7 2 6 gibi ters dizim yapabilir). Sıra bozuk diye kartı başka renge kaydırma, oradaki sembolün yanında ne görüyorsan oku.
+5. '10' kartı için KESİNLİKLE 'T' harfini kullan.
+
+Sadece ve sadece aşağıdaki JSON formatında yanıt ver (başka hiçbir metin ekleme):
+{
+  "N": { "S": "AKT9", "H": "QJ8", "D": "765", "C": "432" },
+  "E": { "S": "...", "H": "...", "D": "...", "C": "..." },
+  "S": { "S": "...", "H": "...", "D": "...", "C": "..." },
+  "W": { "S": "...", "H": "...", "D": "...", "C": "..." }
+}
+                `;
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: promptText },
+                                {
+                                    inline_data: {
+                                        mime_type: "image/jpeg",
+                                        data: collageBase64
+                                    }
+                                }
+                            ]
+                        }],
+                        generationConfig: {
+                            response_mime_type: "application/json",
+                            temperature: 0.1
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!rawJsonText) {
+                    throw new Error("Yapay zekadan geçerli bir yanıt alınamadı.");
+                }
+
+                const parsedResults = JSON.parse(rawJsonText);
+
+                status.innerText = "52 Kart Doğrulaması Yapılıyor...";
+                const validation = validateDeck(parsedResults);
+                validationBox.innerHTML = validation.html;
+                validationBox.className = `validation-report ${validation.isPerfect ? 'success' : 'warning'}`;
+
+                const boardNo = document.getElementById('boardNo').value;
+                const formattedHands = {};
+                for (let dir of ['N', 'E', 'S', 'W']) {
+                    const h = parsedResults[dir] || {};
+                    formattedHands[dir] = `${formatSuitForPbn(h.S)}.${formatSuitForPbn(h.H)}.${formatSuitForPbn(h.D)}.${formatSuitForPbn(h.C)}`;
+                }
+
+                const pbnText = buildPbnString(boardNo, formattedHands.N, formattedHands.E, formattedHands.S, formattedHands.W);
+                document.getElementById('pbnOutput').value = pbnText;
+                
+                // BRİÇ ELİ DENETLEYİCİSİ (YENİLENMİŞ 'T' VE BOLD FONT SİSTEMİ)
+                renderHumanReadableHands(parsedResults);
+
+                resultPanel.style.display = 'block';
+                status.innerText = "✅ İşlem Başarıyla Tamamlandı!";
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = "❌ Hata Oluştu:\n" + (err.message || err.toString());
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // BRİÇ ELİ DENETLEYİCİSİ RENDER FONKSİYONU (10 YERİNE 'T', BÜYÜK VE BOLD FONT)
+        function renderHumanReadableHands(parsedResults) {
+            const container = document.getElementById('handsInspector');
+            const dirNames = { N: 'Kuzey (N)', E: 'Doğu (E)', S: 'Güney (S)', W: 'Batı (W)' };
+            let html = '';
+
+            for (let dir of ['N', 'E', 'S', 'W']) {
+                const hand = parsedResults[dir] || {};
+                
+                const formatCards = (str) => {
+                    const cleaned = cleanSuit(str);
+                    if (!cleaned) return '<span style="color:#94a3b8; font-size: 0.95rem;">— (Şikan)</span>';
+                    // T harfi korunur ve kartlar arasına boşluk konularak kalın yazılır
+                    return cleaned.split('').join(' ');
+                };
+
+                html += `
+                    <div class="inspector-hand">
+                        <div class="inspector-hand-title">${dirNames[dir]}</div>
+                        <div class="suit-line">
+                            <span class="suit-sym suit-black">♠</span>
+                            <span class="suit-cards">${formatCards(hand.S)}</span>
+                        </div>
+                        <div class="suit-line">
+                            <span class="suit-sym suit-red">♥</span>
+                            <span class="suit-cards">${formatCards(hand.H)}</span>
+                        </div>
+                        <div class="suit-line">
+                            <span class="suit-sym suit-red">♦</span>
+                            <span class="suit-cards">${formatCards(hand.D)}</span>
+                        </div>
+                        <div class="suit-line">
+                            <span class="suit-sym suit-black">♣</span>
+                            <span class="suit-cards">${formatCards(hand.C)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function cleanSuit(val) {
+            if (!val || typeof val !== 'string') return "";
+            return val.toUpperCase().replace(/[^AKQJT98765432]/g, '');
+        }
+
+        function formatSuitForPbn(val) {
+            const cleaned = cleanSuit(val);
+            return cleaned.length > 0 ? cleaned : "-";
+        }
+
+        function validateDeck(rawResults) {
+            const suitNames = { S: 'Maça (♠)', H: 'Kupa (♥)', D: 'Karo (♦)', C: 'Sinek (♣)' };
+            const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+            const suits = ['S', 'H', 'D', 'C'];
+            const dirNames = { N: 'Kuzey', E: 'Doğu', S: 'Güney', W: 'Batı' };
+
+            const cardMap = {};
+            suits.forEach(s => {
+                ranks.forEach(r => { cardMap[`${s}_${r}`] = []; });
+            });
+
+            const handCounts = { N: 0, E: 0, S: 0, W: 0 };
+            let totalCardsFound = 0;
+
+            for (let dir of ['N', 'E', 'S', 'W']) {
+                const handObj = rawResults[dir] || {};
+                suits.forEach(s => {
+                    const suitCards = cleanSuit(handObj[s]);
+                    for (let char of suitCards) {
+                        handCounts[dir]++;
+                        totalCardsFound++;
+                        const key = `${s}_${char}`;
+                        if (cardMap[key]) cardMap[key].push(dirNames[dir]);
+                    }
+                });
+            }
+
+            const duplicates = [];
+            const missing = [];
+
+            for (let key in cardMap) {
+                const [s, r] = key.split('_');
+                const rankName = r === 'T' ? 'T (10)' : r;
+                const cardLabel = `${suitNames[s]} ${rankName}`;
+
+                if (cardMap[key].length > 1) {
+                    duplicates.push(`${cardLabel} (${cardMap[key].join(', ')} ellerinde)`);
+                } else if (cardMap[key].length === 0) {
+                    missing.push(cardLabel);
+                }
+            }
+
+            let isPerfect = (totalCardsFound === 52) && (duplicates.length === 0) && (missing.length === 0);
+            let reportHtml = `<strong>Bord Doğrulama Analizi:</strong><br>`;
+
+            if (isPerfect) {
+                reportHtml += `✅ <strong>Mükemmel!</strong> 52 kartın tamamı hatasız ve eksiksiz tespit edildi.`;
+                return { isPerfect: true, html: reportHtml };
+            }
+
+            let issues = [];
+            let countIssues = [];
+            for (let dir of ['N', 'E', 'S', 'W']) {
+                if (handCounts[dir] !== 13) {
+                    countIssues.push(`${dirNames[dir]}: ${handCounts[dir]} kart`);
+                }
+            }
+            if (countIssues.length > 0) {
+                issues.push(`⚠️ <strong>Kart Sayısı Uyuşmazlığı:</strong> ${countIssues.join(', ')} (Her el 13 olmalı).`);
+            }
+
+            if (duplicates.length > 0) {
+                issues.push(`❌ <strong>Çift Okunan Kartlar:</strong> ${duplicates.join('; ')}.`);
+            }
+
+            if (missing.length > 0 && missing.length <= 8) {
+                issues.push(`🔍 <strong>Eksik Kartlar:</strong> ${missing.join(', ')}.`);
+            } else if (missing.length > 8) {
+                issues.push(`🔍 <strong>Eksik Kart Sayısı:</strong> ${missing.length} kart bulunamadı.`);
+            }
+
+            reportHtml += issues.join('<br>');
+            return { isPerfect: false, html: reportHtml };
+        }
+
+        function buildPbnString(boardNo, n, e, s, w) {
+            const dealers = ['N', 'E', 'S', 'W'];
+            const dealer = dealers[(parseInt(boardNo) - 1) % 4];
+            const vulPattern = ['None', 'NS', 'EW', 'All', 'NS', 'EW', 'All', 'None', 'EW', 'All', 'None', 'NS', 'All', 'None', 'NS', 'EW'];
+            const vul = vulPattern[(parseInt(boardNo) - 1) % 16];
+            const today = new Date().toISOString().split('T')[0].replace(/-/g, '.');
+
+            return `[Event "Bridge Hand Digitizer"]
+[Site "Mobile Web App"]
+[Date "${today}"]
+[Board "${boardNo}"]
+[West "-"]
+[North "-"]
+[East "-"]
+[South "-"]
+[Dealer "${dealer}"]
+[Vulnerable "${vul}"]
+[Deal "N:${n} ${e} ${s} ${w}"]`;
+        }
+
+        function copyPbn() {
+            const textarea = document.getElementById('pbnOutput');
+            textarea.select();
+            document.execCommand('copy');
+            alert("PBN kopyalandı!");
+        }
+    </script>
+</body>
+</html>
