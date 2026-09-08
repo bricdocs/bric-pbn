@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>Briç PBN Tarayıcı v1.4</title>
+    <title>Briç PBN Tarayıcı v1.5</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -168,6 +168,7 @@
             font-size: 0.9rem;
             text-align: center;
             color: #64748b;
+            min-height: 24px;
         }
 
         textarea {
@@ -198,7 +199,7 @@
 </head>
 <body>
 
-    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.4</span></h1>
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.5</span></h1>
 
     <!-- Ayarlar Paneli -->
     <div class="panel">
@@ -327,6 +328,68 @@
             });
         }
 
+        async function fetchGeminiWithRetry(apiKey, promptText, fileData, direction) {
+            const statusBox = document.getElementById('status');
+            const models = ['gemini-3.6-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+            let lastError = null;
+
+            for (let m = 0; m < models.length; m++) {
+                const modelName = models[m];
+                
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                        const attemptInfo = attempt > 1 ? ` (Deneme ${attempt}/3)` : '';
+                        statusBox.innerText = `${direction} eli analiz ediliyor... [Model: ${modelName}${attemptInfo}]`;
+
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{
+                                    parts: [
+                                        { text: promptText },
+                                        {
+                                            inline_data: {
+                                                mime_type: fileData.mimeType,
+                                                data: fileData.base64
+                                            }
+                                        }
+                                    ]
+                                }],
+                                generationConfig: {
+                                    response_mime_type: "application/json"
+                                }
+                            })
+                        });
+
+                        if (response.ok) {
+                            return await response.json();
+                        }
+
+                        const errJson = await response.json().catch(() => ({}));
+                        const errMsg = errJson.error?.message || response.statusText;
+
+                        if (response.status === 503 || response.status === 429) {
+                            lastError = new Error(`Sunucu meşgul (${response.status}). Bekleniyor...`);
+                            await new Promise(res => setTimeout(res, 2000 * attempt));
+                            continue;
+                        } else if (response.status === 404) {
+                            break; // Modele erişilemedi, sonraki modele geç
+                        } else {
+                            throw new Error(errMsg);
+                        }
+                    } catch (err) {
+                        lastError = err;
+                        if (attempt === 3) break;
+                        await new Promise(res => setTimeout(res, 2000 * attempt));
+                    }
+                }
+            }
+            throw lastError || new Error(`${direction} eli için API yanıt veremedi.`);
+        }
+
         async function analyzeHandImage(direction, apiKey) {
             const fileData = await fileToBase64(handFiles[direction]);
 
@@ -345,36 +408,7 @@ Sadece ve sadece aşağıdaki tam JSON formatında yanıt ver, başka hiçbir me
 Eğer bir renkte kart yoksa o renk için boş metin "" yaz.
             `;
 
-            const modelName = 'gemini-3.6-flash';
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: promptText },
-                            {
-                                inline_data: {
-                                    mime_type: fileData.mimeType,
-                                    data: fileData.base64
-                                }
-                            }
-                        ]
-                    }],
-                    generationConfig: {
-                        response_mime_type: "application/json"
-                    }
-                })
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || `${direction} eli okunamadı.`);
-            }
-
-            const data = await response.json();
+            const data = await fetchGeminiWithRetry(apiKey, promptText, fileData, direction);
             const textResponse = data.candidates[0].content.parts[0].text;
             const parsed = JSON.parse(textResponse);
 
@@ -406,7 +440,6 @@ Eğer bir renkte kart yoksa o renk için boş metin "" yaz.
                 const results = {};
 
                 for (let dir of directions) {
-                    status.innerText = `${dir} eli analiz ediliyor...`;
                     results[dir] = await analyzeHandImage(dir, apiKey);
                 }
 
