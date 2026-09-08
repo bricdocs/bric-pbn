@@ -903,11 +903,11 @@ Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
                 const panelCanvas = document.createElement('canvas');
                 const pCtx = panelCanvas.getContext('2d');
 
-                if (needsRotate) {
+     if (needsRotate) {
                     panelCanvas.width = h;
                     panelCanvas.height = w;
-                    pCtx.translate(h, 0);
-                    pCtx.rotate(Math.PI / 2);
+                    pCtx.translate(0, w);
+                    pCtx.rotate(-Math.PI / 2);
                     pCtx.drawImage(img, 0, 0);
                 } else {
                     panelCanvas.width = w;
