@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
     <title>Briç PBN Dijitalleştirici v1.26</title>
-    <link rel="stylesheet" href="style.css">
+
 </head>
 <body>
 
@@ -22,7 +22,7 @@
         </div>
     </div>
 
-    <!-- Ayarlar Paneli (API Key & Model Seçimi Accordion) -->
+    <!-- Ayarlar Paneli (API Key Accordion) -->
     <div class="panel">
         <div class="api-accordion-header" onclick="toggleApiKeyPanel()">
             <span>🔑 Gemini API Ayarları</span>
@@ -31,13 +31,9 @@
         <div id="apiKeyContent" class="field-group" style="display: none;">
             <label for="apiKey">Gemini API Key</label>
             <input type="password" id="apiKey" placeholder="API Key giriniz..." onchange="saveApiKey()">
-            
-            <label for="modelSelect" style="margin-top: 8px;">Model Seçimi</label>
-            <select id="modelSelect" onchange="saveModelChoice()">
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Önerilen)</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-            </select>
-            <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">API Key ve model seçiminiz tarayıcınızda saklanır.</div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px;">
+                Aktif Model: <strong>gemini-3.6-flash</strong>. API Key tarayıcınızda saklanır.
+            </div>
         </div>
     </div>
 
@@ -52,13 +48,13 @@
         </div>
     </div>
 
-    <!-- MOD SEÇİCİ SEKMELER (v1.26) -->
+    <!-- MOD SEÇİCİ SEKMELER -->
     <div class="mode-tabs">
         <button id="tab4Photos" class="tab-btn active" onclick="switchMode('4photos')">📂 4 Ayrı El Çekimi (Klasik Mod)</button>
         <button id="tabSingleTable" class="tab-btn" onclick="switchMode('singleTable')">🖼️ Tek Kare Masa (Dinamik Bord)</button>
     </div>
 
-    <!-- MOD 1: 4 AYRI GÖRSEL İLE ÇEKİM (v1.25 Orijinal Mimarisi) -->
+    <!-- MOD 1: 4 AYRI GÖRSEL İLE ÇEKİM -->
     <div id="mode4PhotosArea">
         <div class="upload-options">
             <div class="upload-box">
@@ -102,7 +98,7 @@
         </div>
     </div>
 
-    <!-- MOD 2: TEK KARE MASA VE DİNAMİK BORD OKUMA (v1.26 Entegrasyonu) -->
+    <!-- MOD 2: TEK KARE MASA VE DİNAMİK BORD OKUMA -->
     <div id="modeSingleTableArea" style="display: none;">
         <div class="upload-box" style="background: #faf5ff; border-color: #a855f7; padding: 20px;">
             <label for="singleTableInput" class="btn-upload" style="background: #9333ea;">
@@ -150,9 +146,11 @@
 
     <script>
         const COMPLETED_BOARDS_KEY = "bridge_completed_boards_v1";
+        const API_MODEL = "gemini-3.6-flash";
+
         const handFiles = { N: null, E: null, S: null, W: null };
         let singleTableFile = null;
-        let activeMode = '4photos'; // '4photos' veya 'singleTable'
+        let activeMode = '4photos';
 
         const seqDirections = ['N', 'E', 'S', 'W'];
         const seqLabels = { N: 'Kuzey (N)', E: 'Doğu (E)', S: 'Güney (S)', W: 'Batı (W)' };
@@ -160,13 +158,9 @@
         let activeSingleDir = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // API Key ve Model Kontrolü
             const savedKey = localStorage.getItem('gemini_api_key');
-            const savedModel = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
             const apiKeyContent = document.getElementById('apiKeyContent');
             const badge = document.getElementById('apiKeyStatusBadge');
-
-            document.getElementById('modelSelect').value = savedModel;
 
             if (savedKey) {
                 document.getElementById('apiKey').value = savedKey;
@@ -210,11 +204,6 @@
             }
         }
 
-        function saveModelChoice() {
-            const model = document.getElementById('modelSelect').value;
-            localStorage.setItem('gemini_model', model);
-        }
-
         function getCompletedBoards() {
             const stored = localStorage.getItem(COMPLETED_BOARDS_KEY);
             return stored ? JSON.parse(stored) : [];
@@ -256,7 +245,6 @@
             }
         }
 
-        /* 4 Fotoğraf Modu Metotları */
         function handleBatchFileSelect(event) {
             const files = Array.from(event.target.files);
             if (files.length !== 4) {
@@ -334,7 +322,6 @@
             document.getElementById(`card-${dir}`).classList.add('has-image');
         }
 
-        /* Tek Kare Masa Modu Metodu */
         function handleSingleTableSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -373,7 +360,6 @@
 
         async function processBoard() {
             const apiKey = document.getElementById('apiKey').value.trim();
-            const selectedModel = document.getElementById('modelSelect').value;
 
             if (!apiKey) {
                 alert("Lütfen Gemini API Key giriniz!");
@@ -481,8 +467,8 @@ Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
                     ];
                 }
 
-                status.innerText = `2/2 🚀 ${selectedModel} Modeline İstek Gönderiliyor...`;
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+                status.innerText = `2/2 🚀 ${API_MODEL} Modeline İstek Gönderiliyor...`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
 
                 const response = await fetchWithRetry(url, {
                     method: 'POST',
@@ -783,7 +769,6 @@ Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
             const boardNo = parseInt(document.getElementById('boardNo').value, 10);
             if (!pbnText) return;
 
-            // 1. PBN İndir
             const blob = new Blob([pbnText], { type: 'application/octet-stream;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -794,10 +779,8 @@ Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            // 2. Otomatik Arşiv Görseli İndir
             await generateAndDownloadArchiveImage(boardNo);
 
-            // 3. Hafızayı Güncelle ve Sonraki Borda Geç
             let completed = getCompletedBoards();
             if (!completed.includes(boardNo)) {
                 completed.push(boardNo);
