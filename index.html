@@ -9,7 +9,7 @@
 </head>
 <body>
 
-    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.28</span></h1>
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.29</span></h1>
 
     <!-- TURNUVA YÖNETİMİ / SIFIRLAMA PANELİ -->
     <div class="panel" style="background: #fff1f2; border-color: #fecdd3;">
@@ -402,26 +402,25 @@ Sen hassas bir OCR ve Briç Kart Okuma Uzmanısın.
 Hızlı yanıt vermeye çalışmak kesinlikle yasaktır. Zaman kısıtlaman yok; önceliğin hız değil, %100 kusursuz doğruluktur. Görselleri en yüksek hassasiyetle, pikselleri tek tek inceleyerek son derece yavaş ve detaylı bir şekilde analiz et.
 
 2. KARIŞIK VE SIRASIZ KART DÜZENİ:
-Fotoğraflardaki kartlar renklerine veya değerlerine (rank/suit) göre sıralı veya gruplanmış olmayabilir. Kartlar tamamen rastgele ve karmaşık şekilde dizilmiş olabilir (Örn: Maça 3, Maça K, Kupa Q yan yana durabilir). Asla kartların sıralı olduğunu varsayarak tahmin yürütme; her bir kartı bağımsız ve tekil bir nesne olarak tek tek oku.
+Kartlar renklerine veya değerlerine göre sıralı veya gruplanmış olmayabilir; tamamen rastgele ve karmaşık dizilmiş olabilir. Asla sıralı olduklarını varsayma; her bir kartı bağımsız ve tekil nesneler olarak tek tek oku.
 
 3. SIFIR TAHMİN MANDATI VE ANTI-HALÜSİNASYON:
-Bir kart soluk, gölgeli veya parlamış olsa dahi asla "yön başına X tane olmalı" mantığıyla kart uydurma veya eksik tamamlamaya çalışma. Yalnızca kartın üzerindeki basılı karakterin fiziki çizgisini oku.
+Yalnızca fiziki karakterleri oku. Eksik kart tamamlama, renk dağılımını varsayma veya uydurma yapma.
 
 4. 'Q' VE '9' AYRIMI:
-- 'Q' (Kız) harfinin sağ alt köşesinde çapraz bir kuyruk çizgisi bulunur.
-- '9' (Dokuz) ise altı kıvrımlı bir rakamdır.
+'Q' (Kız) harfinin sağ alt köşesinde çapraz kuyruk çizgisi bulunur, '9' ise altı kıvrımlı bir rakamdır.
 
-5. SEMBOL VE RENK ÇAPASI:
-Her renk grubunu Maça (♠), Kupa (♥), Karo (♦), Sinek (♣) sembollerinin hizasına göre oku. Kırmızı zeminli simgelerin (♥, ♦) siyah renklere karışmadığından emin ol.
+5. '10' KURALI:
+'10' kartı için kesinlikle 'T' harfini kullan.
 
 6. ŞİKAN (VOID) KURALI:
 Bir renkte kart yoksa o alan için kesinlikle boş metin "" bırak.
 
-7. '10' KURALI:
-'10' kartı için kesinlikle 'T' harfini kullan.
+7. KESİN RENK VE SEMBOL KURALI:
+Maça (♠) ve Sinek (♣) her zaman SİYAHTIR; Kupa (♥) ve Karo (♦) her zaman KIRMIZIDIR. Siyah karakterin altındaki sembol asla Karo, kırmızı karakterin altındaki sembol asla Sinek olamaz.
 
 8. 52 KARTIN TAMAMI OKUNDUKTAN SONRA KESİN ÇİFT KONTROL (DOUBLE-CHECK) ŞARTI:
-İlk okuma bittikten ve 52 kartın tamamı okunduktan sonra, hata olup olmadığına bakılmaksızın HER ZAMAN ikinci bir teyit ve doğrulama süreci işlet. Tüm bordun sayımını baştan sona tekrar kontrol et: Briç kuralları gereği her bir yön (N, E, S, W) için elde toplam olarak tam 13 kart olmalıdır; bir bordun tamamındaki toplam kart sayısı tam 52 etmelidir ve aynı kart iki farklı yön için mükerrer olarak okunmamalıdır.
+İlk okuma bittikten ve 52 kartın tamamı okunduktan sonra, hata olup olmadığına bakılmaksızın HER ZAMAN ikinci bir teyit ve doğrulama süreci işlet. Her bir yön (N, E, S, W) için elde toplam olarak tam 13 kart olmalıdır; toplam kart sayısı tam 52 etmelidir ve aynı kart iki farklı yön için mükerrer okunmamalıdır.
 
 Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
 {
@@ -453,25 +452,35 @@ Sen uzman bir briç ve masa fotoğrafı OCR analiz sistemisin.
 1. DERİNLEMESİNE VE YAVAŞ ANALİZ (MUTLAK ÖNCELİK):
 Hızlı yanıt vermeye çalışmak kesinlikle yasaktır. Zaman kısıtlaman yok; önceliğin hız değil, %100 kusursuz doğruluktur. Görselleri en yüksek hassasiyetle, pikselleri tek tek inceleyerek son derece yavaş ve detaylı bir şekilde analiz et.
 
-2. ETİKET VE YAZI ODAKLI YÖN TESPİTİ:
-Plastik gövde üzerindeki silik kabartma N harfini veya okları kesinlikle DİKKATE ALMA. Yalnızca masanın etiket stikerinde açıkça yazan SOUTH, WEST, EAST ve Dealer ibarelerini oku[cite: 2].
+2. KARIŞIK VE SIRASIZ KART DÜZENİ:
+Kartlar renklerine veya değerlerine göre sıralı veya gruplanmış olmayabilir; tamamen rastgele ve karmaşık dizilmiş olabilir. Asla sıralı olduklarını varsayma; her bir kartı bağımsız ve tekil nesneler olarak tek tek oku.
 
-3. GEOMETRİK ZITLIK VE EKSİK YÖN KURALI:
-Okunan etiket yazılarından hareketle aksı kur. Bulunan bir yönün tam karşısı zıttıdır (Örneğin SOUTH bulunan tarafın tam karşısı NORTH'tur; EAST bulunan tarafın tam karşısı WEST'tir). Etikette yazısı bulunmayan veya Dealer ibaresinin yer aldığı taraf ise eksik kalan son temel yönü tamamlar[cite: 2]. Saat yönü dizilimini bu etiketlere göre sabitle.
-
-4. KARIŞIK VE SIRASIZ KART DÜZENİ:
-Kartlar renklerine veya değerlerine göre sıralı veya gruplanmış olmayabilir; tamamen rastgele ve karmaşık dizilmiş olabilir. Asla sıralı olduklarını varsayma; her bir kartı bağımsız ve tekil bir nesne olarak tek tek oku.
-
-5. SIFIR TAHMİN MANDATI VE ANTI-HALÜSİNASYON:
+3. SIFIR TAHMİN MANDATI VE ANTI-HALÜSİNASYON:
 Yalnızca fiziki karakterleri oku. Eksik kart tamamlama, renk dağılımını varsayma veya uydurma yapma.
 
-6. 'Q' VE '9' AYRIMI, '10' KURALI VE ŞİKAN KURALI:
-- 'Q' (Kız) harfinin sağ alt köşesinde çapraz kuyruk çizgisi bulunur, '9' ise altı kıvrımlı rakamdır.
-- '10' kartı için kesinlikle 'T' harfini kullan.
-- Şikan (void) durumlarda boş string "" kullan.
+4. 'Q' VE '9' AYRIMI:
+'Q' (Kız) harfinin sağ alt köşesinde çapraz kuyruk çizgisi bulunur, '9' ise altı kıvrımlı bir rakamdır.
 
-7. 52 KARTIN TAMAMI OKUNDUKTAN SONRA KESİN ÇİFT KONTROL (DOUBLE-CHECK) ŞARTI:
+5. '10' KURALI:
+'10' kartı için kesinlikle 'T' harfini kullan.
+
+6. ŞİKAN (VOID) KURALI:
+Bir renkte kart yoksa o alan için kesinlikle boş metin "" bırak.
+
+7. KESİN RENK VE SEMBOL KURALI:
+Maça (♠) ve Sinek (♣) her zaman SİYAHTIR; Kupa (♥) ve Karo (♦) her zaman KIRMIZIDIR. Siyah karakterin altındaki sembol asla Karo, kırmızı karakterin altındaki sembol asla Sinek olamaz.
+
+8. 52 KARTIN TAMAMI OKUNDUKTAN SONRA KESİN ÇİFT KONTROL (DOUBLE-CHECK) ŞARTI:
 İlk okuma bittikten ve 52 kartın tamamı okunduktan sonra, hata olup olmadığına bakılmaksızın HER ZAMAN ikinci bir teyit ve doğrulama süreci işlet. Her bir yön (N, E, S, W) için elde toplam olarak tam 13 kart olmalıdır; toplam kart sayısı tam 52 etmelidir ve aynı kart iki farklı yön için mükerrer okunmamalıdır.
+
+9. ETİKET VE YAZI ODAKLI YÖN TESPİTİ:
+Plastik gövde üzerindeki silik kabartma N harfini veya okları kesinlikle DİKKATE ALMA. Yalnızca masanın etiket stikerinde açıkça yazan SOUTH, WEST, EAST ve Dealer ibarelerini oku.
+
+10. GEOMETRİK ZITLIK VE EKSİK YÖN KURALI:
+Okunan etiket yazılarından hareketle aksı kur. Bulunan bir yönün tam karşısı zıttıdır (Örn: SOUTH'un karşısı NORTH'tur). Etikette yazısı bulunmayan veya Dealer yazan taraf eksik yönü tamamlar. Saat yönü dizilimini bu etiketlere göre sabitle.
+
+11. BÖLGESEL İZOLASYON (QUADRANT SEPARATION):
+Masadaki 4 el birbirine karıştırılmamalıdır. Masayı zihinsel olarak 4 bölgeye ayır; her eli yalnızca kendi fiziksel bölgesindeki kart kümesinden oku ve komşu ellerin alanına asla taşma.
 
 Sadece ve sadece aşağıdaki JSON formatında yanıt ver:
 {
