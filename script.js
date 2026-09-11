@@ -3,7 +3,7 @@
  * BRIÇ ANALİZ MOTORU (BRIDGE BOARD ANALYZER)
  * ============================================================================
  * Dosya: script.js
- * Versiyon: v1.37
+ * Versiyon: v1.38
  * Tanım: Briç masa fotoğraflarından kart tespiti, skor/AHP hesaplama,
  *        API entegrasyonu ve arayüz mantığını yöneten ana JavaScript dosyası.
  * ============================================================================
