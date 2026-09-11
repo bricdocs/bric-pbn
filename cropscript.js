@@ -123,6 +123,11 @@ function setNorthPosition(northIndex) {
 function sendCropsToMainAnalysis() {
     if (activeNorthIndex === null) return;
 
+    // window.handImages nesnesini garanti altına alıyoruz
+    if (typeof window.handImages === 'undefined') {
+        window.handImages = { N: null, E: null, S: null, W: null };
+    }
+
     // 4 kutuyu atanan yönlere göre (N, E, S, W) ana sisteme aktarıyoruz
     for (let i = 0; i < 4; i++) {
         const canvas = boxCanvases[i];
@@ -131,21 +136,23 @@ function sendCropsToMainAnalysis() {
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
         
-        // Ana sistemin önizleme elementine ve global veri yapısına işliyoruz
+        // Ana sistemin önizleme elementine işliyoruz
         const previewImg = document.getElementById(`preview-${dir}`);
         if (previewImg) {
             previewImg.src = dataUrl;
+            previewImg.style.display = 'block'; // Görünür yap
         }
 
-        // script.js içindeki global handImages veya ilgili fonksiyonu tetiklemesi için
-        if (typeof handImages !== 'undefined') {
-            handImages[dir] = dataUrl;
-        }
+        // Kesin olarak global window.handImages nesnesine yazıyoruz
+        window.handImages[dir] = dataUrl;
     }
 
-    // Kullanıcıya bilgi verip ana analiz fonksiyonunu tetikleyebiliriz
+    // Kullanıcıya bilgi verip ana analiz fonksiyonunu tetikliyoruz
     alert("4 bölge başarıyla Kuzey yönüne göre ayrıştırıldı ve analiz için hazırlandı!");
+    
     if (typeof processBoard === 'function') {
         processBoard();
+    } else {
+        console.error("processBoard fonksiyonu bulunamadı!");
     }
 }
