@@ -1,6 +1,6 @@
 /**
  * BRIÇ ANALİZ MOTORU (BRIDGE BOARD ANALYZER)
- * Dosya: script.js * Versiyon: v1.38
+ * Dosya: script.js * Versiyon: v1.39
  * Tanım: Briç masa fotoğraflarından kart tespiti, skor/AHP hesaplama,
  *        API entegrasyonu ve arayüz mantığını yöneten ana JavaScript dosyası.
  */
@@ -313,7 +313,13 @@
             }
         }
 
-        async function processBoard() {
+/**
+         * GÜNCELLEME (v1.39): Tek Kare Fotoğraf Kırpma (Single Photo Crop) Entegrasyonu.
+         * Bu fonksiyon, cropscript.js modülünden gelen handImages (N, E, S, W) verilerinin
+         * hazır olup olmadığını kontrol eder. Eğer kırpılmış veriler mevcutsa, eski/klasik
+         * dosya input kontrollerini bypass ederek kırpılan 4 yönü doğrudan Gemini API'ye paketler.
+         */
+async function processBoard() {
             const apiKey = document.getElementById('apiKey').value.trim();
 
             if (!apiKey) {
@@ -322,14 +328,20 @@
                 return;
             }
 
-            if (activeMode === '4photos' && (!handFiles.N || !handFiles.E || !handFiles.S || !handFiles.W)) {
-                alert("Lütfen 4 el fotoğrafını da tamamlayın!");
-                return;
-            }
+            // Yeni Kırpma Aracı Modu Kontrolü
+            const isCroppedModeReady = typeof handImages !== 'undefined' && 
+                                     handImages.N && handImages.E && handImages.S && handImages.W;
 
-            if (activeMode === 'singleTable' && !singleTableFile) {
-                alert("Lütfen masanın tek kare fotoğrafını seçin veya çekin!");
-                return;
+            if (!isCroppedModeReady) {
+                if (activeMode === '4photos' && (!handFiles.N || !handFiles.E || !handFiles.S || !handFiles.W)) {
+                    alert("Lütfen 4 el fotoğrafını da tamamlayın!");
+                    return;
+                }
+
+                if (activeMode === 'singleTable' && !singleTableFile) {
+                    alert("Lütfen masanın tek kare fotoğrafını seçin veya çekin!");
+                    return;
+                }
             }
 
             const btn = document.getElementById('btnProcess');
@@ -343,7 +355,20 @@
             try {
                 let partsPayload = [];
 
-                if (activeMode === '4photos') {
+                if (isCroppedModeReady) {
+                    status.innerText = "1/2 ✂️ Kırpılmış 4 Yön Paketleniyor...";
+                    partsPayload = [
+                        { text: promptText },
+                        { text: "Kuzey Eli Fotoğrafı:" },
+                        { inline_data: { mime_type: "image/jpeg", data: handImages.N.split(',')[1] } },
+                        { text: "Doğu Eli Fotoğrafı:" },
+                        { inline_data: { mime_type: "image/jpeg", data: handImages.E.split(',')[1] } },
+                        { text: "Güney Eli Fotoğrafı:" },
+                        { inline_data: { mime_type: "image/jpeg", data: handImages.S.split(',')[1] } },
+                        { text: "Batı Eli Fotoğrafı:" },
+                        { inline_data: { mime_type: "image/jpeg", data: handImages.W.split(',')[1] } }
+                    ];
+                } else if (activeMode === '4photos') {
                     status.innerText = "1/2 📷 Fotoğraflar Paketleniyor...";
                     const base64N = await fileToBase64(handFiles.N);
                     const base64E = await fileToBase64(handFiles.E);
@@ -425,6 +450,7 @@
                 btn.disabled = false;
             }
         }
+
 
         function renderHumanReadableHands(parsedResults) {
             const container = document.getElementById('handsInspector');
