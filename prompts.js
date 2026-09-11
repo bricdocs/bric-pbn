@@ -1,3 +1,7 @@
+// ============================================================
+// Bridge Board Digitizer - System Prompts Module (Pv1.2)
+// Not: Modül dışına aktarılan prompt metinlerini içerir.
+// ============================================================
 const promptText = `
 Sen uzman bir Briç kartı analiz asistanısın.
 Görseldeki kartları eksiksiz ve doğru şekilde okumak için
