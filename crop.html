@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Briç Fotoğraf Kırpma Aracı v1.37</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Briç Masa Fotoğrafı Kırpma Aracı <span class="badge">v1.37</span></h1>
+            <p>Masa fotoğrafını yükleyin, Kuzey (N) yönünü seçin ve 4 eli otomatik kırpıp indirin.</p>
+        </header>
+
+        <div class="panel">
+            <div class="upload-area" onclick="document.getElementById('cropFileInput').click()">
+                <div class="btn-upload">📸 Masa Fotoğrafı Seç / Çek</div>
+                <input type="file" id="cropFileInput" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
+                <div class="upload-hint">4 eli içeren tek kare masa fotoğrafını yükleyin.</div>
+            </div>
+
+            <div id="statusBanner" class="status-banner status-info" style="display:none;">
+                ⚠️ Lütfen Kuzey (N) olan kutunun altındaki <strong>"🧭 Bu Kutu Kuzey (N)"</strong> butonuna tıklayın.
+            </div>
+
+            <!-- 4 BÖLGE KADRAJ GRİDİ -->
+            <div class="table-grid" id="tableGrid" style="display: none;">
+                
+                <!-- ÜST BÖLGE (Index 0) -->
+                <div class="crop-card" id="cropCard-0">
+                    <span class="region-label">Üst Bölge</span>
+                    <span id="cropBadge-0" class="dir-badge unassigned">Seçilmedi</span>
+                    <img id="cropPrev-0" class="crop-preview-img" alt="Üst">
+                    <button class="btn-set-north" onclick="setNorthPosition(0)">🧭 Bu Kutu Kuzey (N)</button>
+                </div>
+
+                <!-- ORTA SATIR: SOL (Index 3) & SAĞ (Index 1) -->
+                <div class="grid-middle-row">
+                    <div class="crop-card" id="cropCard-3">
+                        <span class="region-label">Sol Bölge</span>
+                        <span id="cropBadge-3" class="dir-badge unassigned">Seçilmedi</span>
+                        <img id="cropPrev-3" class="crop-preview-img" alt="Sol">
+                        <button class="btn-set-north" onclick="setNorthPosition(3)">🧭 Bu Kutu Kuzey (N)</button>
+                    </div>
+
+                    <div class="crop-card" id="cropCard-1">
+                        <span class="region-label">Sağ Bölge</span>
+                        <span id="cropBadge-1" class="dir-badge unassigned">Seçilmedi</span>
+                        <img id="cropPrev-1" class="crop-preview-img" alt="Sağ">
+                        <button class="btn-set-north" onclick="setNorthPosition(1)">🧭 Bu Kutu Kuzey (N)</button>
+                    </div>
+                </div>
+
+                <!-- ALT BÖLGE (Index 2) -->
+                <div class="crop-card" id="cropCard-2">
+                    <span class="region-label">Alt Bölge</span>
+                    <span id="cropBadge-2" class="dir-badge unassigned">Seçilmedi</span>
+                    <img id="cropPrev-2" class="crop-preview-img" alt="Alt">
+                    <button class="btn-set-north" onclick="setNorthPosition(2)">🧭 Bu Kutu Kuzey (N)</button>
+                </div>
+
+            </div>
+
+            <button id="btnDownload" class="btn btn-success btn-large" disabled onclick="downloadAllHands()">
+                ✂️ 4 Eli Kırp ve İndir
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Saat yönünde kutu dizilim sırası: 0: Üst, 1: Sağ, 2: Alt, 3: Sol
+        const dirNames = ['N', 'E', 'S', 'W'];
+        const dirLabels = { N: 'KUZEY (N)', E: 'DOĞU (E)', S: 'GÜNEY (S)', W: 'BATI (W)' };
+        const dirFileSuffix = { N: 'NORTH', E: 'EAST', S: 'SOUTH', W: 'WEST' };
+
+        let loadedImage = null;
+        let activeNorthIndex = null;
+        const boxCanvases = [null, null, null, null];
+        const boxAssignedDirs = [null, null, null, null];
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedImage = img;
+                    generateCrops();
+                    document.getElementById('tableGrid').style.display = 'flex';
+                    document.getElementById('statusBanner').style.display = 'block';
+                    resetDirections();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function generateCrops() {
+            if (!loadedImage) return;
+
+            const w = loadedImage.naturalWidth;
+            const h = loadedImage.naturalHeight;
+
+            // Kırpma Koordinatları (0: Üst, 1: Sağ, 2: Alt, 3: Sol)
+            const cropSpecs = [
+                { x: 0.18 * w, y: 0.00 * h, width: 0.64 * w, height: 0.42 * h }, // 0: Üst
+                { x: 0.58 * w, y: 0.18 * h, width: 0.42 * w, height: 0.64 * h }, // 1: Sağ
+                { x: 0.18 * w, y: 0.58 * h, width: 0.64 * w, height: 0.42 * h }, // 2: Alt
+                { x: 0.00 * w, y: 0.18 * h, width: 0.42 * w, height: 0.64 * h }  // 3: Sol
+            ];
+
+            for (let i = 0; i < 4; i++) {
+                const spec = cropSpecs[i];
+                const canvas = document.createElement('canvas');
+                canvas.width = spec.width;
+                canvas.height = spec.height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(
+                    loadedImage,
+                    spec.x, spec.y, spec.width, spec.height,
+                    0, 0, spec.width, spec.height
+                );
+
+                boxCanvases[i] = canvas;
+                document.getElementById(`cropPrev-${i}`).src = canvas.toDataURL('image/jpeg', 0.92);
+            }
+        }
+
+        function resetDirections() {
+            activeNorthIndex = null;
+            for (let i = 0; i < 4; i++) {
+                boxAssignedDirs[i] = null;
+                const card = document.getElementById(`cropCard-${i}`);
+                const badge = document.getElementById(`cropBadge-${i}`);
+                
+                if (card) card.className = 'crop-card';
+                if (badge) {
+                    badge.className = 'dir-badge unassigned';
+                    badge.innerText = 'Seçilmedi';
+                }
+            }
+            document.getElementById('btnDownload').disabled = true;
+            
+            const banner = document.getElementById('statusBanner');
+            banner.className = 'status-banner status-info';
+            banner.innerHTML = '⚠️ Lütfen Kuzey (N) olan kutunun altındaki <strong>"🧭 Bu Kutu Kuzey (N)"</strong> butonuna tıklayın.';
+        }
+
+        function setNorthPosition(northIndex) {
+            activeNorthIndex = northIndex;
+
+            // Kuzey'den itibaren saat yönünde (N -> E -> S -> W) atama
+            for (let k = 0; k < 4; k++) {
+                const boxIdx = (northIndex + k) % 4;
+                const dir = dirNames[k];
+                boxAssignedDirs[boxIdx] = dir;
+
+                const card = document.getElementById(`cropCard-${boxIdx}`);
+                const badge = document.getElementById(`cropBadge-${boxIdx}`);
+
+                if (card) card.className = boxIdx === northIndex ? 'crop-card is-north' : 'crop-card is-assigned';
+                if (badge) {
+                    badge.className = `dir-badge badge-${dir}`;
+                    badge.innerText = dirLabels[dir];
+                }
+            }
+
+            document.getElementById('btnDownload').disabled = false;
+
+            const banner = document.getElementById('statusBanner');
+            banner.className = 'status-banner status-success';
+            banner.innerHTML = '✅ Kuzey belirlendi! Tüm yönler saat yönünde (N → E → S → W) atandı. İndirebilirsiniz.';
+        }
+
+        async function downloadAllHands() {
+            if (activeNorthIndex === null) return;
+
+            const downloadBtn = document.getElementById('btnDownload');
+            downloadBtn.disabled = true;
+            downloadBtn.innerText = '⏳ Fotoğraflar İndiriliyor...';
+
+            for (let i = 0; i < 4; i++) {
+                const canvas = boxCanvases[i];
+                const dir = boxAssignedDirs[i];
+                if (!canvas || !dir) continue;
+
+                const fileName = `Hand_${dirFileSuffix[dir]}.jpg`;
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            downloadBtn.disabled = false;
+            downloadBtn.innerText = '✂️ 4 Eli Kırp ve İndir';
+        }
+    </script>
+</body>
+</html>
