@@ -7,6 +7,8 @@
 
         const COMPLETED_BOARDS_KEY = "bridge_completed_boards_v1";
         const API_MODEL = "gemini-3.6-flash";
+// Kırpma aracından gelecek veriler için küresel alan tanımı
+window.handImages = { N: null, E: null, S: null, W: null };
 
         const handFiles = { N: null, E: null, S: null, W: null };
         let singleTableFile = null;
