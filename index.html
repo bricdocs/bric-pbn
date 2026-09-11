@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>Briç PBN Dijitalleştirici v1.30</title>
+    <title>Briç PBN Dijitalleştirici v1.31</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.30</span></h1>
+    <h1>Briç PBN Dijitalleştirici <span class="version-tag">v1.31</span></h1>
 
     <!-- TURNUVA YÖNETİMİ / SIFIRLAMA PANELİ -->
     <div class="panel" style="background: #fff1f2; border-color: #fecdd3;">
@@ -101,12 +101,22 @@
     <!-- MOD 2: TEK KARE MASA VE DİNAMİK BORD OKUMA -->
     <div id="modeSingleTableArea" style="display: none;">
         <div class="upload-box" style="background: #faf5ff; border-color: #a855f7; padding: 20px;">
-            <label for="singleTableInput" class="btn-upload" style="background: #9333ea;">
-                📸 Masanın Fotoğrafını Çek / Seç
-            </label>
-            <input type="file" id="singleTableInput" accept="image/*" capture="environment" style="display:none;" onchange="handleSingleTableSelect(event)">
-            <div class="upload-desc" style="margin-top: 10px; font-size: 0.85rem; color: #581c87;">
-                Masanın ortasındaki plastik briç kutusunu (board tray) ve 4 eldeki tüm kartları kapsayan tek bir fotoğraf çekin. Etiketler otomatik analiz edilir.
+            
+            <!-- YAN YANA İKİ AYRI YÜKLEME BUTONU -->
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <label for="singleTableCameraInput" class="btn-upload" style="background: #9333ea; flex: 1; min-width: 140px; margin: 0;">
+                    📸 Kameradan Çek
+                </label>
+                <input type="file" id="singleTableCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleSingleTableSelect(event)">
+
+                <label for="singleTableGalleryInput" class="btn-upload" style="background: #6b21a8; flex: 1; min-width: 140px; margin: 0;">
+                    📂 Galeriden Seç
+                </label>
+                <input type="file" id="singleTableGalleryInput" accept="image/*" style="display:none;" onchange="handleSingleTableSelect(event)">
+            </div>
+
+            <div class="upload-desc" style="margin-top: 12px; font-size: 0.85rem; color: #581c87;">
+                Masanın ortasındaki plastik briç kutusunu (board tray) ve 4 eldeki tüm kartları kapsayan tek bir fotoğraf seçin veya çekin.
             </div>
             <img id="previewSingleTable" class="single-table-preview" alt="Masa Görseli">
         </div>
@@ -313,15 +323,6 @@
             event.target.value = '';
         }
 
-        function setHandImage(dir, file) {
-            handFiles[dir] = file;
-            const objectUrl = URL.createObjectURL(file);
-            const img = document.getElementById(`preview-${dir}`);
-            img.src = objectUrl;
-            img.style.display = 'block';
-            document.getElementById(`card-${dir}`).classList.add('has-image');
-        }
-
         function handleSingleTableSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -329,6 +330,7 @@
             const img = document.getElementById('previewSingleTable');
             img.src = URL.createObjectURL(file);
             img.style.display = 'block';
+            event.target.value = '';
         }
 
         function fileToBase64(file) {
