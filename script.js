@@ -320,15 +320,15 @@ window.handImages = { N: null, E: null, S: null, W: null };
  * kapsam (scope) ve değişken izolasyonunu ortadan kaldıran güvenli processBoard fonksiyonu.
  */
 async function processBoard() {
-    const apiKey = document.getElementById('apiKey').value.trim();
+    const apiKeyInput = document.getElementById('apiKey');
+    const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
 
     if (!apiKey) {
         alert("Lütfen Gemini API Key giriniz!");
-        toggleApiKeyPanel();
+        if (typeof toggleApiKeyPanel === 'function') toggleApiKeyPanel();
         return;
     }
 
-    // Tarayıcı genelinde (window) veya yerel kapsamda kırpılmış verileri güvenle yakala
     const croppedData = window.handImages || (typeof handImages !== 'undefined' ? handImages : null);
     const isCroppedModeReady = croppedData && croppedData.N && croppedData.E && croppedData.S && croppedData.W;
 
@@ -350,18 +350,18 @@ async function processBoard() {
     const status = document.getElementById('status');
     const resultPanel = document.getElementById('resultPanel');
     const validationBox = document.getElementById('validationBox');
+    const boardNoSelect = document.getElementById('boardNo');
+    const pbnOutputArea = document.getElementById('pbnOutput');
 
-    btn.disabled = true;
-    resultPanel.style.display = 'none';
+    if (btn) btn.disabled = true;
+    if (resultPanel) resultPanel.style.display = 'none';
 
     try {
         let partsPayload = [];
 
         if (isCroppedModeReady) {
-            status.innerText = "1/2 ✂️ Kırpılmış 4 Yön Paketleniyor...";
-            
-            // Base64 verisinin başında 'data:image/jpeg;base64,' kalıntısı varsa temizle
-            const cleanBase64 = (val) => val.includes(',') ? val.split(',')[1] : val;
+            if (status) status.innerText = "1/2 ✂️ Kırpılmış 4 Yön Paketleniyor...";
+            const cleanBase64 = (val) => val && val.includes(',') ? val.split(',')[1] : val;
 
             partsPayload = [
                 { text: promptText },
@@ -375,7 +375,7 @@ async function processBoard() {
                 { inline_data: { mime_type: "image/jpeg", data: cleanBase64(croppedData.W) } }
             ];
         } else if (activeMode === '4photos') {
-            status.innerText = "1/2 📷 Fotoğraflar Paketleniyor...";
+            if (status) status.innerText = "1/2 📷 Fotoğraflar Paketleniyor...";
             const base64N = await fileToBase64(handFiles.N);
             const base64E = await fileToBase64(handFiles.E);
             const base64S = await fileToBase64(handFiles.S);
@@ -393,7 +393,7 @@ async function processBoard() {
                 { inline_data: { mime_type: "image/jpeg", data: base64W } }
             ];
         } else {
-            status.innerText = "1/2 🖼️ Masa Fotoğrafı Hazırlanıyor...";
+            if (status) status.innerText = "1/2 🖼️ Masa Fotoğrafı Hazırlanıyor...";
             const base64Table = await fileToBase64(singleTableFile);
 
             partsPayload = [
@@ -402,7 +402,7 @@ async function processBoard() {
             ];
         }
 
-        status.innerText = `2/2 🚀 ${API_MODEL} Modeline İstek Gönderiliyor...`;
+        if (status) status.innerText = `2/2 🚀 ${API_MODEL} Modeline İstek Gönderiliyor...`;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
 
         const response = await fetchWithRetry(url, {
@@ -429,12 +429,15 @@ async function processBoard() {
 
         const parsedResults = JSON.parse(rawJsonText);
 
-        status.innerText = "52 Kart Doğrulaması Yapılıyor...";
+        if (status) status.innerText = "52 Kart Doğrulaması Yapılıyor...";
         const validation = validateDeck(parsedResults);
-        validationBox.innerHTML = validation.html;
-        validationBox.className = `validation-report ${validation.isPerfect ? 'success' : 'warning'}`;
+        
+        if (validationBox) {
+            validationBox.innerHTML = validation.html;
+            validationBox.className = `validation-report ${validation.isPerfect ? 'success' : 'warning'}`;
+        }
 
-        const boardNo = document.getElementById('boardNo').value;
+        const boardNo = boardNoSelect ? boardNoSelect.value : "1";
         const formattedHands = {};
         for (let dir of ['N', 'E', 'S', 'W']) {
             const h = parsedResults[dir] || {};
@@ -442,21 +445,22 @@ async function processBoard() {
         }
 
         const pbnText = buildPbnString(boardNo, formattedHands.N, formattedHands.E, formattedHands.S, formattedHands.W);
-        document.getElementById('pbnOutput').value = pbnText;
+        if (pbnOutputArea) pbnOutputArea.value = pbnText;
         
-        renderHumanReadableHands(parsedResults);
+        if (typeof renderHumanReadableHands === 'function') {
+            renderHumanReadableHands(parsedResults);
+        }
 
-        resultPanel.style.display = 'block';
-        status.innerText = "✅ İşlem Başarıyla Tamamlandı!";
+        if (resultPanel) resultPanel.style.display = 'block';
+        if (status) status.innerText = "✅ İşlem Başarıyla Tamamlandı!";
 
     } catch (err) {
         console.error(err);
-        status.innerText = "❌ Hata Oluştu:\n" + (err.message || err.toString());
+        if (status) status.innerText = "❌ Hata Oluştu:\n" + (err.message || err.toString());
     } finally {
-        btn.disabled = false;
+        if (btn) btn.disabled = false;
     }
 }
-
 
         function renderHumanReadableHands(parsedResults) {
             const container = document.getElementById('handsInspector');
