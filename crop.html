@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Briç Bord Fotoğrafı 4 Bölge Kırpma Testi</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #121826; color: #f0f4f8; padding: 20px; line-height: 1.5; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #2a3447; }
+        h1 { font-size: 1.8rem; color: #38bdf8; margin-bottom: 8px; }
+        p.subtitle { color: #94a3b8; font-size: 0.95rem; }
+        
+        .upload-card { background: #1e293b; border: 2px dashed #38bdf8; border-radius: 12px; padding: 30px; text-align: center; margin-bottom: 25px; transition: border-color 0.2s; }
+        .upload-card:hover { border-color: #7dd3fc; }
+        input[type="file"] { display: none; }
+        .btn { display: inline-block; background: #0284c7; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.95rem; transition: background 0.2s; text-decoration: none; margin: 4px; }
+        .btn:hover { background: #0369a1; }
+        .btn-success { background: #10b981; }
+        .btn-success:hover { background: #059669; }
+        
+        .controls-card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 25px; display: none; }
+        .controls-card h3 { font-size: 1.1rem; color: #f1f5f9; margin-bottom: 15px; }
+        .grid-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .control-group { background: #0f172a; padding: 12px; border-radius: 8px; }
+        .control-group label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 5px; }
+        .control-group input[type="range"] { width: 100%; }
+        .val-badge { float: right; color: #38bdf8; font-weight: bold; }
+
+        .actions-bar { text-align: center; margin: 20px 0; display: none; }
+
+        .preview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+        .crop-card { background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; display: flex; flex-direction: column; }
+        .crop-card-header { background: #0f172a; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .crop-title { font-weight: 700; color: #38bdf8; font-size: 1rem; }
+        .crop-card-body { padding: 15px; text-align: center; flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #090d16; min-height: 200px; }
+        .crop-card-body img { max-width: 100%; max-height: 280px; object-fit: contain; border-radius: 6px; border: 1px solid #1e293b; }
+        .crop-card-footer { padding: 12px; text-align: center; background: #1e293b; border-top: 1px solid #334155; }
+
+        .info-box { background: #1e293b; border-left: 4px solid #38bdf8; padding: 15px; border-radius: 4px; margin-top: 25px; font-size: 0.9rem; color: #cbd5e1; }
+        .info-box ul { margin-left: 20px; margin-top: 8px; }
+        .info-box li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Briç Bord Kırpma &amp; İndirme Test Aracı</h1>
+            <p class="subtitle">Tek kare masa fotoğrafını NORTH, EAST, SOUTH, WEST bölgelerine ayırıp indirin</p>
+        </header>
+
+        <div class="upload-card">
+            <p style="margin-bottom: 15px; color: #cbd5e1;">Test etmek istediğiniz Briç Bord fotoğrafını seçin:</p>
+            <label class="btn">
+                📁 Fotoğraf Seç
+                <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)">
+            </label>
+        </div>
+
+        <div class="controls-card" id="controlsCard">
+            <h3>⚙️ Kırpma Oranları ve Örtüşme Payları (Canlı Ayar)</h3>
+            <div class="grid-controls">
+                <div class="control-group">
+                    <label>KUZEY (NORTH - Üst Yükseklik): <span class="val-badge" id="valTop">38%</span></label>
+                    <input type="range" id="sliderTop" min="20" max="60" value="38" oninput="updateCrops()">
+                </div>
+                <div class="control-group">
+                    <label>GÜNEY (SOUTH - Alt Yükseklik): <span class="val-badge" id="valBottom">38%</span></label>
+                    <input type="range" id="sliderBottom" min="20" max="60" value="38" oninput="updateCrops()">
+                </div>
+                <div class="control-group">
+                    <label>BATI (WEST - Sol Genişlik): <span class="val-badge" id="valLeft">42%</span></label>
+                    <input type="range" id="sliderLeft" min="20" max="60" value="42" oninput="updateCrops()">
+                </div>
+                <div class="control-group">
+                    <label>DOĞU (EAST - Sağ Genişlik): <span class="val-badge" id="valRight">42%</span></label>
+                    <input type="range" id="sliderRight" min="20" max="60" value="42" oninput="updateCrops()">
+                </div>
+            </div>
+            <p style="font-size:0.8rem; color:#94a3b8;">* Kartların dışarıda kalmaması için orta kısımlarda bilinçli olarak örtüşme (overlap) bırakılmıştır.</p>
+        </div>
+
+        <div class="actions-bar" id="actionsBar">
+            <button class="btn btn-success" onclick="downloadAllCrops()">⬇️ 4 Bölgeyi de İndir (Tüm Yönler)</button>
+        </div>
+
+        <div class="preview-grid" id="previewGrid" style="display:none;">
+            <!-- NORTH -->
+            <div class="crop-card">
+                <div class="crop-card-header">
+                    <span class="crop-title">⬆️ NORTH (Kuzey / Üst)</span>
+                    <span style="font-size:0.75rem; color:#94a3b8;">bridge_crop_NORTH.jpg</span>
+                </div>
+                <div class="crop-card-body">
+                    <img id="imgNORTH" alt="NORTH">
+                </div>
+                <div class="crop-card-footer">
+                    <button class="btn" onclick="downloadSingle('NORTH')">⬇️ İndir: NORTH</button>
+                </div>
+            </div>
+
+            <!-- EAST -->
+            <div class="crop-card">
+                <div class="crop-card-header">
+                    <span class="crop-title">➡️ EAST (Doğu / Sağ)</span>
+                    <span style="font-size:0.75rem; color:#94a3b8;">bridge_crop_EAST.jpg</span>
+                </div>
+                <div class="crop-card-body">
+                    <img id="imgEAST" alt="EAST">
+                </div>
+                <div class="crop-card-footer">
+                    <button class="btn" onclick="downloadSingle('EAST')">⬇️ İndir: EAST</button>
+                </div>
+            </div>
+
+            <!-- SOUTH -->
+            <div class="crop-card">
+                <div class="crop-card-header">
+                    <span class="crop-title">⬇️ SOUTH (Güney / Alt)</span>
+                    <span style="font-size:0.75rem; color:#94a3b8;">bridge_crop_SOUTH.jpg</span>
+                </div>
+                <div class="crop-card-body">
+                    <img id="imgSOUTH" alt="SOUTH">
+                </div>
+                <div class="crop-card-footer">
+                    <button class="btn" onclick="downloadSingle('SOUTH')">⬇️ İndir: SOUTH</button>
+                </div>
+            </div>
+
+            <!-- WEST -->
+            <div class="crop-card">
+                <div class="crop-card-header">
+                    <span class="crop-title">⬅️ WEST (Batı / Sol)</span>
+                    <span style="font-size:0.75rem; color:#94a3b8;">bridge_crop_WEST.jpg</span>
+                </div>
+                <div class="crop-card-body">
+                    <img id="imgWEST" alt="WEST">
+                </div>
+                <div class="crop-card-footer">
+                    <button class="btn" onclick="downloadSingle('WEST')">⬇️ İndir: WEST</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>📌 Test Notları:</strong>
+            <ul>
+                <li>İndirilen dosyalar sırasıyla <code>bridge_crop_NORTH.jpg</code>, <code>bridge_crop_EAST.jpg</code>, <code>bridge_crop_SOUTH.jpg</code>, <code>bridge_crop_WEST.jpg</code> olarak adlandırılır.</li>
+                <li>Eğer bir kart kenardan kesiliyorsa, yukarıdaki kaydırıcılar (sliders) ile oranları artırıp tam kapsama sağlayabilirsiniz.</li>
+                <li>Bu kırpma mantığı ana projeye aktarıldığında AI her yöne ayrı ayrı net odaklanacaktır.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let loadedImage = null;
+        const cropData = {};
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const img = new Image();
+                img.onload = function() {
+                    loadedImage = img;
+                    document.getElementById('controlsCard').style.display = 'block';
+                    document.getElementById('actionsBar').style.display = 'block';
+                    document.getElementById('previewGrid').style.display = 'grid';
+                    updateCrops();
+                };
+                img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateCrops() {
+            if (!loadedImage) return;
+
+            const topPct = parseInt(document.getElementById('sliderTop').value) / 100;
+            const bottomPct = parseInt(document.getElementById('sliderBottom').value) / 100;
+            const leftPct = parseInt(document.getElementById('sliderLeft').value) / 100;
+            const rightPct = parseInt(document.getElementById('sliderRight').value) / 100;
+
+            document.getElementById('valTop').innerText = Math.round(topPct * 100) + '%';
+            document.getElementById('valBottom').innerText = Math.round(bottomPct * 100) + '%';
+            document.getElementById('valLeft').innerText = Math.round(leftPct * 100) + '%';
+            document.getElementById('valRight').innerText = Math.round(rightPct * 100) + '%';
+
+            const w = loadedImage.naturalWidth;
+            const h = loadedImage.naturalHeight;
+
+            // Region definitions based on percentages
+            const regions = {
+                NORTH: { x: 0, y: 0, w: 1, h: topPct },
+                SOUTH: { x: 0, y: 1 - bottomPct, w: 1, h: bottomPct },
+                WEST:  { x: 0, y: 0.18, w: leftPct, h: 0.64 },
+                EAST:  { x: 1 - rightPct, y: 0.18, w: rightPct, h: 0.64 }
+            };
+
+            for (const [key, rect] of Object.entries(regions)) {
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(w * rect.w);
+                canvas.height = Math.round(h * rect.h);
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(
+                    loadedImage,
+                    Math.round(w * rect.x), Math.round(h * rect.y), Math.round(w * rect.w), Math.round(h * rect.h),
+                    0, 0, canvas.width, canvas.height
+                );
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                cropData[key] = dataUrl;
+                document.getElementById('img' + key).src = dataUrl;
+            }
+        }
+
+        function downloadSingle(dir) {
+            if (!cropData[dir]) return;
+            const link = document.createElement('a');
+            link.href = cropData[dir];
+            link.download = `bridge_crop_${dir}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadAllCrops() {
+            const directions = ['NORTH', 'EAST', 'SOUTH', 'WEST'];
+            directions.forEach((dir, index) => {
+                setTimeout(() => {
+                    downloadSingle(dir);
+                }, index * 300); // 300ms delay between downloads to prevent browser blocking
+            });
+        }
+    </script>
+</body>
+</html>
