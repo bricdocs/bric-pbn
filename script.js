@@ -314,142 +314,146 @@
         }
 
 /**
-         * GÜNCELLEME (v1.39): Tek Kare Fotoğraf Kırpma (Single Photo Crop) Entegrasyonu.
-         * Bu fonksiyon, cropscript.js modülünden gelen handImages (N, E, S, W) verilerinin
-         * hazır olup olmadığını kontrol eder. Eğer kırpılmış veriler mevcutsa, eski/klasik
-         * dosya input kontrollerini bypass ederek kırpılan 4 yönü doğrudan Gemini API'ye paketler.
-         */
+ * GÜNCELLEME (v1.39 Kesin Çözüm): cropscript.js ve script.js arasındaki 
+ * kapsam (scope) ve değişken izolasyonunu ortadan kaldıran güvenli processBoard fonksiyonu.
+ */
 async function processBoard() {
-            const apiKey = document.getElementById('apiKey').value.trim();
+    const apiKey = document.getElementById('apiKey').value.trim();
 
-            if (!apiKey) {
-                alert("Lütfen Gemini API Key giriniz!");
-                toggleApiKeyPanel();
-                return;
-            }
+    if (!apiKey) {
+        alert("Lütfen Gemini API Key giriniz!");
+        toggleApiKeyPanel();
+        return;
+    }
 
-            // Yeni Kırpma Aracı Modu Kontrolü
-            const isCroppedModeReady = typeof handImages !== 'undefined' && 
-                                     handImages.N && handImages.E && handImages.S && handImages.W;
+    // Tarayıcı genelinde (window) veya yerel kapsamda kırpılmış verileri güvenle yakala
+    const croppedData = window.handImages || (typeof handImages !== 'undefined' ? handImages : null);
+    const isCroppedModeReady = croppedData && croppedData.N && croppedData.E && croppedData.S && croppedData.W;
 
-            if (!isCroppedModeReady) {
-                if (activeMode === '4photos' && (!handFiles.N || !handFiles.E || !handFiles.S || !handFiles.W)) {
-                    alert("Lütfen 4 el fotoğrafını da tamamlayın!");
-                    return;
-                }
+    console.log("🚀 processBoard tetiklendi. Kırpılmış Veri Durumu:", isCroppedModeReady);
 
-                if (activeMode === 'singleTable' && !singleTableFile) {
-                    alert("Lütfen masanın tek kare fotoğrafını seçin veya çekin!");
-                    return;
-                }
-            }
-
-            const btn = document.getElementById('btnProcess');
-            const status = document.getElementById('status');
-            const resultPanel = document.getElementById('resultPanel');
-            const validationBox = document.getElementById('validationBox');
-
-            btn.disabled = true;
-            resultPanel.style.display = 'none';
-
-            try {
-                let partsPayload = [];
-
-                if (isCroppedModeReady) {
-                    status.innerText = "1/2 ✂️ Kırpılmış 4 Yön Paketleniyor...";
-                    partsPayload = [
-                        { text: promptText },
-                        { text: "Kuzey Eli Fotoğrafı:" },
-                        { inline_data: { mime_type: "image/jpeg", data: handImages.N.split(',')[1] } },
-                        { text: "Doğu Eli Fotoğrafı:" },
-                        { inline_data: { mime_type: "image/jpeg", data: handImages.E.split(',')[1] } },
-                        { text: "Güney Eli Fotoğrafı:" },
-                        { inline_data: { mime_type: "image/jpeg", data: handImages.S.split(',')[1] } },
-                        { text: "Batı Eli Fotoğrafı:" },
-                        { inline_data: { mime_type: "image/jpeg", data: handImages.W.split(',')[1] } }
-                    ];
-                } else if (activeMode === '4photos') {
-                    status.innerText = "1/2 📷 Fotoğraflar Paketleniyor...";
-                    const base64N = await fileToBase64(handFiles.N);
-                    const base64E = await fileToBase64(handFiles.E);
-                    const base64S = await fileToBase64(handFiles.S);
-                    const base64W = await fileToBase64(handFiles.W);
-
-                    partsPayload = [
-                        { text: promptText },
-                        { text: "Kuzey Eli Fotoğrafı:" },
-                        { inline_data: { mime_type: "image/jpeg", data: base64N } },
-                        { text: "Doğu Eli Fotoğrafı:" },
-                        { inline_data: { mime_type: "image/jpeg", data: base64E } },
-                        { text: "Güney Eli Fotoğrafı:" },
-                        { inline_data: { mime_type: "image/jpeg", data: base64S } },
-                        { text: "Batı Eli Fotoğrafı:" },
-                        { inline_data: { mime_type: "image/jpeg", data: base64W } }
-                    ];
-                } else {
-                    status.innerText = "1/2 🖼️ Masa Fotoğrafı Hazırlanıyor...";
-                    const base64Table = await fileToBase64(singleTableFile);
-
-                    partsPayload = [
-                        { text: singlePromptText },
-                        { inline_data: { mime_type: "image/jpeg", data: base64Table } }
-                    ];
-                }
-
-                status.innerText = `2/2 🚀 ${API_MODEL} Modeline İstek Gönderiliyor...`;
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
-
-                const response = await fetchWithRetry(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: partsPayload }],
-                        generationConfig: {
-                            response_mime_type: "application/json",
-                            temperature: 0.0
-                        }
-                    })
-                });
-
-                if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.error?.message || `HTTP ${response.status}`);
-                }
-
-                const data = await response.json();
-                const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (!rawJsonText) throw new Error("Yapay zekadan geçerli yanıt alınamadı.");
-
-                const parsedResults = JSON.parse(rawJsonText);
-
-                status.innerText = "52 Kart Doğrulaması Yapılıyor...";
-                const validation = validateDeck(parsedResults);
-                validationBox.innerHTML = validation.html;
-                validationBox.className = `validation-report ${validation.isPerfect ? 'success' : 'warning'}`;
-
-                const boardNo = document.getElementById('boardNo').value;
-                const formattedHands = {};
-                for (let dir of ['N', 'E', 'S', 'W']) {
-                    const h = parsedResults[dir] || {};
-                    formattedHands[dir] = `${formatSuitForPbn(h.S)}.${formatSuitForPbn(h.H)}.${formatSuitForPbn(h.D)}.${formatSuitForPbn(h.C)}`;
-                }
-
-                const pbnText = buildPbnString(boardNo, formattedHands.N, formattedHands.E, formattedHands.S, formattedHands.W);
-                document.getElementById('pbnOutput').value = pbnText;
-                
-                renderHumanReadableHands(parsedResults);
-
-                resultPanel.style.display = 'block';
-                status.innerText = "✅ İşlem Başarıyla Tamamlandı!";
-
-            } catch (err) {
-                console.error(err);
-                status.innerText = "❌ Hata Oluştu:\n" + (err.message || err.toString());
-            } finally {
-                btn.disabled = false;
-            }
+    if (!isCroppedModeReady) {
+        if (activeMode === '4photos' && (!handFiles.N || !handFiles.E || !handFiles.S || !handFiles.W)) {
+            alert("Lütfen 4 el fotoğrafını da tamamlayın!");
+            return;
         }
+
+        if (activeMode === 'singleTable' && !singleTableFile) {
+            alert("Lütfen masanın tek kare fotoğrafını seçin veya çekin!");
+            return;
+        }
+    }
+
+    const btn = document.getElementById('btnProcess');
+    const status = document.getElementById('status');
+    const resultPanel = document.getElementById('resultPanel');
+    const validationBox = document.getElementById('validationBox');
+
+    btn.disabled = true;
+    resultPanel.style.display = 'none';
+
+    try {
+        let partsPayload = [];
+
+        if (isCroppedModeReady) {
+            status.innerText = "1/2 ✂️ Kırpılmış 4 Yön Paketleniyor...";
+            
+            // Base64 verisinin başında 'data:image/jpeg;base64,' kalıntısı varsa temizle
+            const cleanBase64 = (val) => val.includes(',') ? val.split(',')[1] : val;
+
+            partsPayload = [
+                { text: promptText },
+                { text: "Kuzey Eli Fotoğrafı:" },
+                { inline_data: { mime_type: "image/jpeg", data: cleanBase64(croppedData.N) } },
+                { text: "Doğu Eli Fotoğrafı:" },
+                { inline_data: { mime_type: "image/jpeg", data: cleanBase64(croppedData.E) } },
+                { text: "Güney Eli Fotoğrafı:" },
+                { inline_data: { mime_type: "image/jpeg", data: cleanBase64(croppedData.S) } },
+                { text: "Batı Eli Fotoğrafı:" },
+                { inline_data: { mime_type: "image/jpeg", data: cleanBase64(croppedData.W) } }
+            ];
+        } else if (activeMode === '4photos') {
+            status.innerText = "1/2 📷 Fotoğraflar Paketleniyor...";
+            const base64N = await fileToBase64(handFiles.N);
+            const base64E = await fileToBase64(handFiles.E);
+            const base64S = await fileToBase64(handFiles.S);
+            const base64W = await fileToBase64(handFiles.W);
+
+            partsPayload = [
+                { text: promptText },
+                { text: "Kuzey Eli Fotoğrafı:" },
+                { inline_data: { mime_type: "image/jpeg", data: base64N } },
+                { text: "Doğu Eli Fotoğrafı:" },
+                { inline_data: { mime_type: "image/jpeg", data: base64E } },
+                { text: "Güney Eli Fotoğrafı:" },
+                { inline_data: { mime_type: "image/jpeg", data: base64S } },
+                { text: "Batı Eli Fotoğrafı:" },
+                { inline_data: { mime_type: "image/jpeg", data: base64W } }
+            ];
+        } else {
+            status.innerText = "1/2 🖼️ Masa Fotoğrafı Hazırlanıyor...";
+            const base64Table = await fileToBase64(singleTableFile);
+
+            partsPayload = [
+                { text: singlePromptText },
+                { inline_data: { mime_type: "image/jpeg", data: base64Table } }
+            ];
+        }
+
+        status.innerText = `2/2 🚀 ${API_MODEL} Modeline İstek Gönderiliyor...`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODEL}:generateContent?key=${apiKey}`;
+
+        const response = await fetchWithRetry(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: partsPayload }],
+                generationConfig: {
+                    response_mime_type: "application/json",
+                    temperature: 0.0
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!rawJsonText) throw new Error("Yapay zekadan geçerli yanıt alınamadı.");
+
+        const parsedResults = JSON.parse(rawJsonText);
+
+        status.innerText = "52 Kart Doğrulaması Yapılıyor...";
+        const validation = validateDeck(parsedResults);
+        validationBox.innerHTML = validation.html;
+        validationBox.className = `validation-report ${validation.isPerfect ? 'success' : 'warning'}`;
+
+        const boardNo = document.getElementById('boardNo').value;
+        const formattedHands = {};
+        for (let dir of ['N', 'E', 'S', 'W']) {
+            const h = parsedResults[dir] || {};
+            formattedHands[dir] = `${formatSuitForPbn(h.S)}.${formatSuitForPbn(h.H)}.${formatSuitForPbn(h.D)}.${formatSuitForPbn(h.C)}`;
+        }
+
+        const pbnText = buildPbnString(boardNo, formattedHands.N, formattedHands.E, formattedHands.S, formattedHands.W);
+        document.getElementById('pbnOutput').value = pbnText;
+        
+        renderHumanReadableHands(parsedResults);
+
+        resultPanel.style.display = 'block';
+        status.innerText = "✅ İşlem Başarıyla Tamamlandı!";
+
+    } catch (err) {
+        console.error(err);
+        status.innerText = "❌ Hata Oluştu:\n" + (err.message || err.toString());
+    } finally {
+        btn.disabled = false;
+    }
+}
 
 
         function renderHumanReadableHands(parsedResults) {
