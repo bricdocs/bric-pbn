@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Briç Fotoğraf Kırpma Aracı v1.37</title>
-
-<style>
+    <title>Briç Fotoğraf Kırpma Aracı v1.1</title>
+    <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #121826; color: #f0f4f8; padding: 20px; line-height: 1.5; }
         .container { max-width: 1100px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #2a3447; }
         h1 { font-size: 1.8rem; color: #38bdf8; margin-bottom: 8px; }
         .badge { background: #0284c7; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; vertical-align: middle; }
-        p.subtitle, p { color: #94a3b8; font-size: 0.95rem; }
+        p.subtitle { color: #94a3b8; font-size: 0.95rem; }
 
         .panel { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 25px; }
         .upload-area { background: #1e293b; border: 2px dashed #38bdf8; border-radius: 12px; padding: 25px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: border-color 0.2s; }
@@ -27,19 +26,31 @@
         .btn-success:hover { background: #059669; }
         .btn-large { width: 100%; padding: 14px; font-size: 1.1rem; margin-top: 15px; }
 
+        /* KIRMAMA AYARLARI (%) */
+        .controls-card { background: #0f172a; padding: 18px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+        .controls-card h3 { font-size: 1rem; color: #f1f5f9; margin-bottom: 15px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; }
+        .grid-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .control-group { background: #1e293b; padding: 12px; border-radius: 8px; }
+        .control-group label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 6px; }
+        .control-group input[type="range"] { width: 100%; cursor: pointer; }
+        .val-badge { float: right; color: #38bdf8; font-weight: bold; }
+
+        /* UYARI BANNERI */
         .status-banner { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95rem; text-align: center; }
         .status-info { background: #0f172a; border: 1px solid #38bdf8; color: #7dd3fc; }
         .status-success { background: #064e3b; border: 1px solid #10b981; color: #6ee7b7; }
 
+        /* KADRAJ GRID DÜZENİ */
         .table-grid { display: flex; flex-direction: column; align-items: center; gap: 15px; margin: 20px 0; }
         .grid-middle-row { display: flex; justify-content: center; gap: 15px; width: 100%; flex-wrap: wrap; }
 
-        .crop-card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 12px; width: 280px; display: flex; flex-direction: column; align-items: center; position: relative; transition: all 0.2s; }
+        .crop-card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 12px; width: 280px; display: flex; flex-direction: column; align-items: center; transition: all 0.2s; }
         .crop-card.is-north { border: 2px solid #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.3); }
         .crop-card.is-assigned { border: 1px solid #10b981; }
 
         .region-label { font-size: 0.85rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
 
+        /* YÖN ETİKETLERİ */
         .dir-badge { font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-bottom: 8px; }
         .dir-badge.unassigned { background: #334155; color: #94a3b8; }
         .dir-badge.badge-N { background: #0284c7; color: #fff; }
@@ -47,37 +58,56 @@
         .dir-badge.badge-S { background: #16a34a; color: #fff; }
         .dir-badge.badge-W { background: #9333ea; color: #fff; }
 
-        .crop-preview-img { width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; border: 1px solid #0f172a; background: #090d16; margin: 8px 0; display: block; }
+        /* GÖRSEL BOYUT KISITLAMASI */
+        .crop-preview-img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 6px; border: 1px solid #0f172a; background: #090d16; margin: 8px 0; display: block; }
 
         .btn-set-north { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 6px; transition: all 0.2s; }
         .btn-set-north:hover { background: #38bdf8; color: #0f172a; }
-
-        .info-box { background: #1e293b; border-left: 4px solid #38bdf8; padding: 15px; border-radius: 4px; margin-top: 25px; font-size: 0.9rem; color: #cbd5e1; }
-        .info-box ul { margin-left: 20px; margin-top: 8px; }
-        .info-box li { margin-bottom: 4px; }
     </style>
-
 </head>
 <body>
 
     <div class="container">
         <header>
-            <h1>Briç Masa Fotoğrafı Kırpma Aracı <span class="badge">v1.37</span></h1>
-            <p>Masa fotoğrafını yükleyin, Kuzey (N) yönünü seçin ve 4 eli otomatik kırpıp indirin.</p>
+            <h1>Briç Masa Fotoğrafı Kırpma Aracı <span class="badge">v1.1</span></h1>
+            <p class="subtitle">Masa fotoğrafını yükleyin, kırpma yüzdelerini ayarlayın ve Kuzey (N) yönünü seçerek indirin.</p>
         </header>
 
         <div class="panel">
             <div class="upload-area" onclick="document.getElementById('cropFileInput').click()">
                 <div class="btn-upload">📸 Masa Fotoğrafı Seç / Çek</div>
                 <input type="file" id="cropFileInput" accept="image/*" style="display:none;" onchange="handleImageSelect(event)">
-                <div class="upload-hint">4 eli içeren tek kare masa fotoğrafını yükleyin.</div>
+                <span class="upload-hint">4 eli içeren tek kare masa fotoğrafını yükleyin.</span>
+            </div>
+
+            <!-- KIRMAMA HASSAS AYARLARI (%) SLIDER PANELSİ -->
+            <div class="controls-card" id="controlsCard" style="display: none;">
+                <h3>⚙️ Kırpma Hassas Ayarları (%)</h3>
+                <div class="grid-controls">
+                    <div class="control-group">
+                        <label>Üst / Alt Derinlik (%): <span id="valCropY" class="val-badge">42%</span></label>
+                        <input type="range" id="inputCropY" min="20" max="60" value="42" oninput="updateCropParams()">
+                    </div>
+                    <div class="control-group">
+                        <label>Sağ / Sol Derinlik (%): <span id="valCropX" class="val-badge">42%</span></label>
+                        <input type="range" id="inputCropX" min="20" max="60" value="42" oninput="updateCropParams()">
+                    </div>
+                    <div class="control-group">
+                        <label>Üst/Alt Genişlik (%): <span id="valCropW" class="val-badge">64%</span></label>
+                        <input type="range" id="inputCropW" min="40" max="80" value="64" oninput="updateCropParams()">
+                    </div>
+                    <div class="control-group">
+                        <label>Sağ/Sol Yükseklik (%): <span id="valCropH" class="val-badge">64%</span></label>
+                        <input type="range" id="inputCropH" min="40" max="80" value="64" oninput="updateCropParams()">
+                    </div>
+                </div>
             </div>
 
             <div id="statusBanner" class="status-banner status-info" style="display:none;">
                 ⚠️ Lütfen Kuzey (N) olan kutunun altındaki <strong>"🧭 Bu Kutu Kuzey (N)"</strong> butonuna tıklayın.
             </div>
 
-            <!-- 4 BÖLGE KADRAJ GRİDİ -->
+            <!-- 4 BÖLGE KADRAJ GRIDI -->
             <div class="table-grid" id="tableGrid" style="display: none;">
                 
                 <!-- ÜST BÖLGE (Index 0) -->
@@ -122,7 +152,6 @@
     </div>
 
     <script>
-        // Saat yönünde kutu dizilim sırası: 0: Üst, 1: Sağ, 2: Alt, 3: Sol
         const dirNames = ['N', 'E', 'S', 'W'];
         const dirLabels = { N: 'KUZEY (N)', E: 'DOĞU (E)', S: 'GÜNEY (S)', W: 'BATI (W)' };
         const dirFileSuffix = { N: 'NORTH', E: 'EAST', S: 'SOUTH', W: 'WEST' };
@@ -131,6 +160,28 @@
         let activeNorthIndex = null;
         const boxCanvases = [null, null, null, null];
         const boxAssignedDirs = [null, null, null, null];
+
+        // Yüzde Parametreleri
+        let cropYPct = 0.42;
+        let cropXPct = 0.42;
+        let cropWPct = 0.64;
+        let cropHPct = 0.64;
+
+        function updateCropParams() {
+            cropYPct = parseInt(document.getElementById('inputCropY').value) / 100;
+            cropXPct = parseInt(document.getElementById('inputCropX').value) / 100;
+            cropWPct = parseInt(document.getElementById('inputCropW').value) / 100;
+            cropHPct = parseInt(document.getElementById('inputCropH').value) / 100;
+
+            document.getElementById('valCropY').innerText = Math.round(cropYPct * 100) + '%';
+            document.getElementById('valCropX').innerText = Math.round(cropXPct * 100) + '%';
+            document.getElementById('valCropW').innerText = Math.round(cropWPct * 100) + '%';
+            document.getElementById('valCropH').innerText = Math.round(cropHPct * 100) + '%';
+
+            if (loadedImage) {
+                generateCrops();
+            }
+        }
 
         function handleImageSelect(event) {
             const file = event.target.files[0];
@@ -141,9 +192,10 @@
                 const img = new Image();
                 img.onload = () => {
                     loadedImage = img;
-                    generateCrops();
+                    document.getElementById('controlsCard').style.display = 'block';
                     document.getElementById('tableGrid').style.display = 'flex';
                     document.getElementById('statusBanner').style.display = 'block';
+                    generateCrops();
                     resetDirections();
                 };
                 img.src = e.target.result;
@@ -157,12 +209,12 @@
             const w = loadedImage.naturalWidth;
             const h = loadedImage.naturalHeight;
 
-            // Kırpma Koordinatları (0: Üst, 1: Sağ, 2: Alt, 3: Sol)
+            // Yüzdeye göre dinamik kırpma matrisi
             const cropSpecs = [
-                { x: 0.18 * w, y: 0.00 * h, width: 0.64 * w, height: 0.42 * h }, // 0: Üst
-                { x: 0.58 * w, y: 0.18 * h, width: 0.42 * w, height: 0.64 * h }, // 1: Sağ
-                { x: 0.18 * w, y: 0.58 * h, width: 0.64 * w, height: 0.42 * h }, // 2: Alt
-                { x: 0.00 * w, y: 0.18 * h, width: 0.42 * w, height: 0.64 * h }  // 3: Sol
+                { x: ((1 - cropWPct) / 2) * w, y: 0, width: cropWPct * w, height: cropYPct * h },                 // 0: Üst
+                { x: (1 - cropXPct) * w, y: ((1 - cropHPct) / 2) * h, width: cropXPct * w, height: cropHPct * h }, // 1: Sağ
+                { x: ((1 - cropWPct) / 2) * w, y: (1 - cropYPct) * h, width: cropWPct * w, height: cropYPct * h }, // 2: Alt
+                { x: 0, y: ((1 - cropHPct) / 2) * h, width: cropXPct * w, height: cropHPct * h }                  // 3: Sol
             ];
 
             for (let i = 0; i < 4; i++) {
@@ -206,7 +258,6 @@
         function setNorthPosition(northIndex) {
             activeNorthIndex = northIndex;
 
-            // Kuzey'den itibaren saat yönünde (N -> E -> S -> W) atama
             for (let k = 0; k < 4; k++) {
                 const boxIdx = (northIndex + k) % 4;
                 const dir = dirNames[k];
